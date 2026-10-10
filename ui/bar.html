@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hub</title>
+  <link rel="stylesheet" href="css/hub.css">
+</head>
+<body class="collapsed">
+  <div class="bar" id="bar">
+    <div class="clock pywebview-drag-region" data-i18n-title="bar.drag">
+      <span class="time" id="time">--:--</span>
+      <span class="date" id="date"></span>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="sep" aria-hidden="true"></div>
+    <nav class="tiles" id="tiles" data-i18n-aria="bar.panels"></nav>
+    <div class="bar-end">
+      <span class="warn-dot" id="warn" hidden></span>
+      <button class="icon-btn" id="pin" aria-pressed="false" data-i18n-title="bar.pin" data-i18n-aria="bar.pin"></button>
+      <button class="icon-btn" id="quit" data-i18n-title="bar.quit" data-i18n-aria="bar.quit"></button>
+    </div>
+  </div>
+  <script type="module" src="js/bar.js"></script>
+</body>
+</html>

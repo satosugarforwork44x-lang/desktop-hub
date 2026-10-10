@@ -1,0 +1,33 @@
+{
+  "id": "media",
+  "name": "メディア",
+  "version": "1.0.0",
+  "summary": "動画と音楽を再生する。ファイルやフォルダを落とすと再生リストに入る",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": { "hub": ">=0.6", "moduleApi": 1 },
+  "hub": {
+    "window": "panel",
+    "size": [420, 600],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "play" },
+    "opens": [".mp4", ".m4v", ".mov", ".webm", ".mkv", ".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".oga", ".opus",
+              ".avi", ".wmv", ".flv", ".mpg", ".mpeg", ".ts", ".m2ts", ".3gp", ".wma", ".aiff", ".aif", ".ape"],
+    "blob": "blob_path"
+  },
+  "exports": [
+    { "fn": "state", "summary": "再生リストと設定" },
+    { "fn": "add", "summary": "ファイル・フォルダを再生リストに入れる" },
+    { "fn": "remove", "summary": "再生リストから外す" },
+    { "fn": "clear", "summary": "再生リストを空にする" },
+    { "fn": "set_current", "summary": "今の曲を覚える" },
+    { "fn": "set_prefs", "summary": "音量・繰り返しを覚える" },
+    { "fn": "reveal_path", "summary": "実際の場所（エクスプローラーで表示用）" },
+    { "fn": "ffmpeg_status", "summary": "ffmpeg があるか" },
+    { "fn": "convert", "summary": "再生できない形式を ffmpeg で MP4 / M4A にする" },
+    { "fn": "convert_status", "summary": "変換の進み具合" }
+  ],
+  "locales": { "en": { "name": "Media", "summary": "Play videos and music. Drop files or folders to add them to the playlist" } }
+}

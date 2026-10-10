@@ -1,0 +1,204 @@
+{
+  "id": "pdf",
+  "name": "ビューア",
+  "version": "2.1.0",
+  "summary": "PDF と画像（TIFF も）を見る・印刷する・テキストにする（OCR）・PDF を画像にする",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": {
+    "hub": ">=0.6",
+    "moduleApi": 1
+  },
+  "hub": {
+    "window": "panel",
+    "size": [
+      340,
+      460
+    ],
+    "instanceSize": [
+      880,
+      1000
+    ],
+    "ui": "ui/panel.js",
+    "tile": {
+      "icon": "viewer"
+    },
+    "opens": [
+      ".pdf",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".jpe",
+      ".jfif",
+      ".gif",
+      ".webp",
+      ".bmp",
+      ".tif",
+      ".tiff"
+    ],
+    "blob": "blob_path"
+  },
+  "exports": [
+    {
+      "fn": "open_doc",
+      "summary": "PDF か画像を開く（ビューアの窓の id を返す）"
+    },
+    {
+      "fn": "neighbor",
+      "summary": "同じフォルダの前／次の画像を開く"
+    },
+    {
+      "fn": "doc_info",
+      "summary": "開いた PDF の情報"
+    },
+    {
+      "fn": "recent",
+      "summary": "最近開いた PDF"
+    },
+    {
+      "fn": "forget",
+      "summary": "最近の一覧から外す"
+    },
+    {
+      "fn": "extract_text",
+      "summary": "テキストにする（文字が無いページは OCR）"
+    },
+    {
+      "fn": "ocr_status",
+      "summary": "OCR が使えるか"
+    },
+    {
+      "fn": "association",
+      "summary": "「プログラムから開く」への登録状態"
+    },
+    {
+      "fn": "set_association",
+      "summary": "「プログラムから開く」に Hub を登録する／外す"
+    },
+    {
+      "fn": "reveal_path",
+      "summary": "開いた PDF の実パス（エクスプローラーで表示用）"
+    }
+  ],
+  "actions": [
+    {
+      "id": "to_images",
+      "label": "画像にする",
+      "accepts": [
+        ".pdf"
+      ],
+      "run": [
+        "{python}",
+        "{module_dir}/cli.py",
+        "{file}",
+        "--format",
+        "{format}",
+        "--dpi",
+        "{dpi}",
+        "--pages",
+        "{pages}",
+        "--tiff-mode",
+        "{tiff_mode}"
+      ],
+      "params": [
+        {
+          "name": "format",
+          "label": "形式",
+          "type": "select",
+          "default": "png",
+          "options": [
+            {
+              "value": "png",
+              "label": "PNG"
+            },
+            {
+              "value": "jpeg",
+              "label": "JPEG"
+            },
+            {
+              "value": "tiff",
+              "label": "TIFF（1ファイルにまとめる）"
+            }
+          ]
+        },
+        {
+          "name": "dpi",
+          "label": "解像度 (dpi)",
+          "type": "number",
+          "default": 200,
+          "min": 50,
+          "max": 600,
+          "step": 50
+        },
+        {
+          "name": "pages",
+          "label": "ページ",
+          "type": "text",
+          "default": "all",
+          "placeholder": "all または 1,3-5"
+        },
+        {
+          "name": "tiff_mode",
+          "label": "TIFFの色",
+          "type": "select",
+          "default": "color",
+          "showIf": {
+            "format": "tiff"
+          },
+          "options": [
+            {
+              "value": "color",
+              "label": "カラー（LZW圧縮）"
+            },
+            {
+              "value": "gray",
+              "label": "グレー（LZW圧縮）"
+            },
+            {
+              "value": "bw",
+              "label": "白黒（G4圧縮・図面向け）"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "locales": {
+    "en": {
+      "name": "Viewer",
+      "summary": "View and print PDFs and images (TIFF too), turn them into text (OCR), convert PDFs to images",
+      "actions": {
+        "to_images": {
+          "label": "Convert to images",
+          "params": {
+            "format": {
+              "label": "Format",
+              "options": {
+                "png": "PNG",
+                "jpeg": "JPEG",
+                "tiff": "TIFF (single file)"
+              }
+            },
+            "dpi": {
+              "label": "Resolution (dpi)"
+            },
+            "pages": {
+              "label": "Pages",
+              "placeholder": "all, or 1,3-5"
+            },
+            "tiff_mode": {
+              "label": "TIFF color",
+              "options": {
+                "color": "Color (LZW)",
+                "gray": "Grayscale (LZW)",
+                "bw": "Black & white (G4, for drawings)"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

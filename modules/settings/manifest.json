@@ -1,0 +1,16 @@
+{
+  "id": "settings",
+  "name": "設定",
+  "version": "1.0.0",
+  "summary": "表示言語・バーの位置・フォルダの場所・Claude 連携などの設定",
+  "kind": "panel",
+  "runtime": "web",
+  "visibility": "public",
+  "hub": {
+    "window": "panel",
+    "size": [380, 620],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "gear", "place": "end" }
+  },
+  "locales": { "en": { "name": "Settings", "summary": "Language, bar position, folder location, Claude integration and more" } }
+}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hub panel</title>
+  <link rel="stylesheet" href="css/hub.css">
+</head>
+<body>
+  <div class="panel">
+    <header class="panel-head">
+      <div class="panel-title pywebview-drag-region" id="title" data-i18n-title="panel.drag">
+        <span id="title-icon"></span><span class="name" id="title-name"></span>
+      </div>
+      <div class="panel-tools" id="tools"></div>
+      <button class="icon-btn" id="btn-collapse" data-i18n-title="panel.collapse" data-i18n-aria="panel.collapse"></button>
+      <button class="icon-btn" id="btn-close" data-i18n-title="panel.close" data-i18n-aria="panel.close"></button>
+    </header>
+    <main class="panel-body" id="body"></main>
+    <footer class="panel-foot" id="foot"></footer>
+  </div>
+  <div class="grip" id="grip" data-i18n-title="panel.resize"></div>
+  <script type="module" src="js/panel.js"></script>
+</body>
+</html>

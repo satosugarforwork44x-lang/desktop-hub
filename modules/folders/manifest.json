@@ -1,0 +1,86 @@
+{
+  "id": "folders",
+  "name": "フォルダ",
+  "version": "1.0.0",
+  "summary": "デスクトップに置いていたファイルを、名前付きのフォルダ窓（レジストリ）に仕分ける",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "private",
+  "hub": {
+    "window": "panel",
+    "size": [
+      320,
+      420
+    ],
+    "multi": true,
+    "ui": "ui/panel.js",
+    "tile": {
+      "icon": "folder"
+    }
+  },
+  "exports": [
+    {
+      "fn": "instances",
+      "summary": "レジストリ一覧"
+    },
+    {
+      "fn": "create_registry",
+      "summary": "レジストリを作る"
+    },
+    {
+      "fn": "list_dir",
+      "summary": "フォルダの中身（1階層）"
+    },
+    {
+      "fn": "search",
+      "summary": "名前で探す"
+    },
+    {
+      "fn": "move_in",
+      "summary": "外からドロップしたファイルを取り込む"
+    },
+    {
+      "fn": "move_within",
+      "summary": "同じレジストリ内で移動"
+    },
+    {
+      "fn": "move_to",
+      "summary": "別のレジストリへ移動"
+    },
+    {
+      "fn": "undo",
+      "summary": "直前の移動を元に戻す"
+    },
+    {
+      "fn": "rename",
+      "summary": "名前を変える"
+    },
+    {
+      "fn": "make_folder",
+      "summary": "新しいフォルダを作る"
+    },
+    {
+      "fn": "trash",
+      "summary": "ごみ箱へ送る"
+    },
+    {
+      "fn": "full_path",
+      "summary": "実パスを返す"
+    },
+    {
+      "fn": "read_text",
+      "summary": "テキストファイルを読む"
+    },
+    {
+      "fn": "write_text",
+      "summary": "テキストファイルを書く"
+    }
+  ],
+  "locales": {
+    "en": {
+      "name": "Folders",
+      "summary": "Sort files from your desktop into named folder panels"
+    }
+  }
+}

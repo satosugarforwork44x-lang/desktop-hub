@@ -1,0 +1,26 @@
+{
+  "id": "web",
+  "name": "Web",
+  "version": "1.0.0",
+  "summary": "よく見るサイトのショートカット。Hub のミニ窓か、選んだブラウザ（Chrome / Edge / Firefox）で開く",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": { "hub": ">=0.6", "moduleApi": 1 },
+  "hub": {
+    "window": "panel",
+    "size": [340, 480],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "globe" }
+  },
+  "exports": [
+    { "fn": "items", "summary": "ショートカットの一覧" },
+    { "fn": "save", "summary": "追加・書き換え" },
+    { "fn": "remove", "summary": "削除" },
+    { "fn": "reorder", "summary": "並べ替え" },
+    { "fn": "browsers", "summary": "使えるブラウザ" },
+    { "fn": "launch", "summary": "ブラウザで開く（ミニ窓は画面側から host が開く）" }
+  ],
+  "locales": { "en": { "name": "Web", "summary": "Shortcuts to sites you visit often. Open them in a Hub mini window or the browser you choose (Chrome / Edge / Firefox)" } }
+}

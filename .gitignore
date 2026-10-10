@@ -1,0 +1,6 @@
+hub.config.json
+hub.config.json.migrated
+data/
+__pycache__/
+*.pyc
+*.hubtmp

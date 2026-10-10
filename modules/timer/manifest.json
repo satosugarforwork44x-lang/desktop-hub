@@ -1,0 +1,27 @@
+{
+  "id": "timer",
+  "name": "タイマー",
+  "version": "1.0.0",
+  "summary": "集中や休憩の時間を測る。残り時間はバーに出る",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": { "hub": ">=0.6", "moduleApi": 1 },
+  "hub": {
+    "window": "panel",
+    "size": [300, 470],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "timer" },
+    "status": { "fn": "status", "every": 5 }
+  },
+  "exports": [
+    { "fn": "state", "summary": "今の状態" },
+    { "fn": "start", "summary": "開始（分）" },
+    { "fn": "pause", "summary": "一時停止" },
+    { "fn": "resume", "summary": "再開" },
+    { "fn": "reset", "summary": "止めて消す" },
+    { "fn": "status", "summary": "バーに出す残り時間" }
+  ],
+  "locales": { "en": { "name": "Timer", "summary": "Time a focus block or a break. The time left shows on the bar" } }
+}

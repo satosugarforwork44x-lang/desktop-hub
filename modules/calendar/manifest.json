@@ -1,0 +1,28 @@
+{
+  "id": "calendar",
+  "name": "予定",
+  "version": "1.0.0",
+  "summary": "Google / Outlook.com / iCloud の予定を iCal URL で読み取り、次の予定をバーに出す",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "hub": {
+    "window": "panel",
+    "size": [320, 440],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "calendar" },
+    "status": { "fn": "status", "every": 60 }
+  },
+  "exports": [
+    { "fn": "upcoming", "summary": "これからの予定" },
+    { "fn": "status", "summary": "バーに出す次の予定" },
+    { "fn": "set_urls", "summary": "iCal URL を登録する" }
+  ],
+  "locales": {
+    "en": {
+      "name": "Calendar",
+      "summary": "Reads Google / Outlook.com / iCloud calendars via iCal URL and shows the next event on the bar"
+    }
+  }
+}

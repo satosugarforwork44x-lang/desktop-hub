@@ -1,0 +1,30 @@
+/* system.css — PC モニター。色は hub.css の変数（テーマ）に従う */
+.sm { display: grid; gap: 14px; padding: 2px 12px 18px; }
+.sm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sm-card {
+  position: relative; display: grid; gap: 2px; padding: 10px 12px 0; border-radius: var(--r-l); background: var(--ink-2);
+  overflow: hidden; min-height: 104px; align-content: start;
+}
+.sm-label { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.sm-val { font: 600 21px/1.2 var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sm-sub { font: 11px var(--font-num); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.sm-spark { display: block; width: calc(100% + 24px); height: 38px; margin: 4px -12px 0; }
+.sm-card.warn .sm-val { color: var(--danger); }
+.sm-card.off .sm-val { color: var(--faint); }
+.sm-card.off .sm-spark { display: none; }
+.sm-sec { display: grid; gap: 8px; }
+.sm-h { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.sm-top { display: grid; gap: 2px; }
+.sm-proc { display: grid; grid-template-columns: minmax(0, 1fr) 70px 46px 58px; align-items: center; gap: 8px; height: 26px; padding: 0 6px; border-radius: var(--r-s); font-size: 12px; }
+.sm-proc:hover { background: var(--ink-2); }
+.sm-pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-pbar { height: 4px; border-radius: 4px; background: var(--ink-3); overflow: hidden; }
+.sm-pbar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, rgb(var(--c1-rgb)), rgb(var(--c2-rgb)), rgb(var(--c3-rgb))); }
+.sm-pcpu, .sm-pmem { text-align: right; font: 11.5px var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.sm-opts { padding-top: 12px; border-top: 1px solid var(--line); gap: 10px; }
+.sm-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+.sm-host {
+  width: 150px; height: 30px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--r); background: var(--ink-2);
+  color: var(--text); font: 12.5px var(--font-num); outline: none; text-align: right;
+}
+.sm-host:focus { border-color: var(--signal); }

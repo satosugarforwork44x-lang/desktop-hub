@@ -1,0 +1,27 @@
+{
+  "id": "system",
+  "name": "PC モニター",
+  "version": "1.0.0",
+  "summary": "CPU・メモリ・GPU・ディスク・通信量・Ping をリアルタイムに見る。重いアプリも分かる",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": { "hub": ">=0.6", "moduleApi": 1 },
+  "hub": {
+    "window": "panel",
+    "size": [380, 640],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "gauge" },
+    "status": { "fn": "status", "every": 5 }
+  },
+  "exports": [
+    { "fn": "sample", "summary": "今の CPU・メモリ・ディスク・通信量・GPU" },
+    { "fn": "top", "summary": "CPU を多く使っているアプリ" },
+    { "fn": "ping", "summary": "指定先までの応答時間" },
+    { "fn": "prefs", "summary": "設定（Ping 先・バーに出すか）" },
+    { "fn": "set_prefs", "summary": "設定を変える" },
+    { "fn": "status", "summary": "バーに出す CPU・メモリ" }
+  ],
+  "locales": { "en": { "name": "PC Monitor", "summary": "Live CPU, memory, GPU, disk, network traffic and ping — and which apps are heavy" } }
+}

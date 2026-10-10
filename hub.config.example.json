@@ -1,0 +1,13 @@
+{
+  "configVersion": 3,
+  "appearance": { "mode": "dark", "accent": "aurora" },
+  "lang": "auto",
+  "bar": { "dock": "top", "length": "auto", "onTop": true, "labels": "auto", "intro": true },
+  "windows": { "corners": "round" },
+  "panels": { "onTop": false },
+  "mcp": { "calendar": true, "panels": { "Inbox": "read" } },
+  "modules": {
+    "folders": { "root": "~/Hub" },
+    "calendar": { "urls": [] }
+  }
+}

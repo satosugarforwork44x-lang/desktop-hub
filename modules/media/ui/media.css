@@ -1,0 +1,73 @@
+/* media.css — メディアプレイヤー。色は hub.css の変数（テーマ）に従う */
+.mp { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.mp-stage {
+  position: relative; flex: none; aspect-ratio: 16 / 10; max-height: 52vh; margin: 2px 12px 0; border-radius: var(--r-l);
+  overflow: hidden; background: #000;
+}
+.mp[data-kind="audio"] .mp-stage, .mp:not([data-kind]) .mp-stage { background: var(--well); }
+.mp-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; cursor: pointer; }
+.mp[data-kind="video"] .mp-video { display: block; }
+.mp-art { position: absolute; inset: 0; display: none; }
+.mp[data-kind="audio"] .mp-art { display: block; }
+.mp-art canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mp-art-title, .mp-art-sub {
+  position: absolute; left: 50%; transform: translateX(-50%); max-width: 46%; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
+}
+.mp-art-title { top: calc(50% - 10px); font-weight: 600; font-size: 13px; }
+.mp-art-sub { top: calc(50% + 10px); font: 10.5px var(--font-num); letter-spacing: .14em; color: var(--muted); }
+.mp-empty { position: absolute; inset: 0; display: none; border-radius: var(--r-l); }
+.mp.empty .mp-empty { display: grid; }
+.mp.empty .mp-art { display: none; }
+.mp.over .mp-stage { outline: 2px dashed var(--signal); outline-offset: -6px; }
+.mp-msg {
+  position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; padding: 20px; text-align: center;
+  background: color-mix(in srgb, var(--solid-2) 88%, transparent); white-space: pre-line; font-size: 12.5px; line-height: 1.6;
+}
+.mp-msg[hidden] { display: none; }
+.mp-msg .btn-row { justify-content: center; }
+
+.mp-seek { display: flex; align-items: center; gap: 10px; padding: 12px 16px 2px; font: 11.5px var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.mp-seek .mp-pos { flex: 1; }
+.mp-ctrl { display: flex; align-items: center; gap: 4px; padding: 4px 12px 10px; }
+.mp-grow { flex: 1; }
+.mp-play {
+  display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--primary); color: var(--primary-text);
+  box-shadow: 0 8px 22px rgba(var(--c2-rgb), .32), inset 0 1px 0 rgba(255, 255, 255, .22);
+  transition: filter .12s, transform .12s;
+}
+.mp-play .icon { width: 20px; height: 20px; }
+.mp-play:hover { filter: brightness(1.1); }
+.mp-play:active { transform: scale(.96); }
+.mp-play:disabled { opacity: .4; cursor: default; filter: none; box-shadow: none; }
+.mp-vol { width: 84px; }
+.mp-ctrl .icon-btn[hidden] { display: none; }
+
+/* つまみ付きのバー（再生位置・音量）。進んだ分はグラデーション */
+.mp-range { -webkit-appearance: none; appearance: none; height: 18px; background: transparent; cursor: pointer; --p: 0%; }
+.mp-range::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 4px;
+  background: linear-gradient(90deg, rgb(var(--c1-rgb)), rgb(var(--c2-rgb)) calc(var(--p) * .6), rgb(var(--c3-rgb)) var(--p), var(--ink-3) var(--p));
+}
+.mp-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px; border-radius: 50%; background: var(--text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .35); transition: transform .1s;
+}
+.mp-range:hover::-webkit-slider-thumb, .mp-range:focus-visible::-webkit-slider-thumb { transform: scale(1.25); }
+.mp-range:focus { outline: none; }
+
+.mp-listhead { display: flex; align-items: center; gap: 2px; padding: 6px 10px 4px 16px; border-top: 1px solid var(--line); }
+.mp-listtitle { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.mp-list { flex: 1; min-height: 0; overflow: auto; padding: 0 8px 14px; display: grid; align-content: start; gap: 1px; }
+.mp-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-s);
+  background: transparent; color: var(--text); text-align: left; cursor: pointer;
+}
+.mp-item:hover { background: var(--ink-2); }
+.mp-item.on { background: var(--tint); }
+.mp-item .icon { color: var(--muted); }
+.mp-item.on .icon { color: var(--signal); }
+.mp-no { width: 20px; flex: none; text-align: right; font: 11px var(--font-num); color: var(--faint); }
+.mp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-ext { font: 10px var(--font-num); letter-spacing: .08em; color: var(--faint); }

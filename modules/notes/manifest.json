@@ -1,0 +1,28 @@
+{
+  "id": "notes",
+  "name": "メモ",
+  "version": "1.0.0",
+  "summary": "思いついたことをすぐ書き留める。チェックを付ければ ToDo になる。画像も貼れる",
+  "kind": "panel",
+  "runtime": "python",
+  "api": "api.py",
+  "visibility": "public",
+  "requires": { "hub": ">=0.6", "moduleApi": 1 },
+  "hub": {
+    "window": "panel",
+    "size": [340, 480],
+    "ui": "ui/panel.js",
+    "tile": { "icon": "note" },
+    "blob": "image_path"
+  },
+  "exports": [
+    { "fn": "items", "summary": "一覧" },
+    { "fn": "add", "summary": "追加" },
+    { "fn": "update", "summary": "書き換え・完了・ToDo化" },
+    { "fn": "remove", "summary": "削除（元に戻せる）" },
+    { "fn": "restore", "summary": "削除を元に戻す" },
+    { "fn": "add_image", "summary": "貼り付けた画像を保存" },
+    { "fn": "clear_done", "summary": "完了した ToDo をまとめて消す" }
+  ],
+  "locales": { "en": { "name": "Notes", "summary": "Jot things down. Check a note to make it a to-do. Paste images too" } }
+}

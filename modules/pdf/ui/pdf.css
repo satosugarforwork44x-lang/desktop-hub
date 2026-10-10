@@ -1,0 +1,120 @@
+/* pdf.css — PDF パネルとビューアの見た目。色は hub.css の変数（テーマ）に従う */
+
+/* ---------- ホーム（開く場所） ---------- */
+.pdf-home { padding: 4px 14px 18px; display: grid; gap: 16px; }
+.pdf-h { margin: 4px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.pdf-recent { display: grid; gap: 2px; }
+.pdf-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--r-s);
+  background: transparent; color: var(--text); text-align: left; cursor: pointer;
+}
+.pdf-row:hover { background: var(--ink-2); }
+.pdf-row:disabled { opacity: .45; cursor: default; }
+.pdf-row .icon { color: #E06C5A; }
+.pdf-row.img .icon { color: #B583E0; }
+.pdf-row-text { min-width: 0; display: grid; }
+.pdf-row-name, .pdf-row-folder { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-row-folder { font-size: 11px; color: var(--muted); }
+.pdf-assoc { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* ---------- ビューア ---------- */
+.pv { height: 100%; display: flex; flex-direction: column; position: relative; }
+.pv-bar {
+  flex: none; display: flex; align-items: center; gap: 2px; padding: 4px 8px 6px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+}
+.pv-sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.pv-grow { flex: 1; }
+.pv-pageno { display: flex; align-items: center; font: 12.5px var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pv-pageinput {
+  width: 42px; height: 28px; padding: 0 6px; text-align: right; border: 1px solid transparent; border-radius: var(--r-s);
+  background: var(--ink-2); color: var(--text); font: inherit;
+}
+.pv-pageinput:focus { outline: none; border-color: var(--signal); }
+.pv-count { padding: 0 4px; }
+.pv-zoombox { width: 132px; height: 30px; font-size: 12.5px; }
+.pv-search {
+  display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: var(--pill);
+  background: var(--ink-2); color: var(--muted); min-width: 0; flex: 0 1 220px;
+}
+.pv-search:focus-within { box-shadow: inset 0 0 0 1px var(--signal); }
+.pv-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font: inherit; outline: none; }
+.pv-search input::-webkit-search-cancel-button { display: none; }
+.pv-hits { font: 11.5px var(--font-num); white-space: nowrap; }
+.pv-main { flex: 1; min-height: 0; display: flex; }
+.pv-thumbs {
+  flex: none; width: 150px; overflow: auto; padding: 10px 8px 24px; display: grid; gap: 10px; align-content: start;
+  border-right: 1px solid var(--line);
+}
+.pv-thumbs[hidden] { display: none; }
+.pv-thumb {
+  display: grid; gap: 4px; justify-items: center; padding: 6px; border: 0; border-radius: var(--r); background: transparent;
+  color: var(--muted); font: 11px var(--font-num); cursor: pointer;
+}
+.pv-thumb canvas { width: 110px; height: auto; min-height: 60px; background: #fff; border-radius: 3px; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); }
+.pv-thumb:hover { background: var(--ink-2); }
+.pv-thumb.on { background: var(--ink-3); color: var(--text); }
+.pv-thumb.on canvas { box-shadow: 0 0 0 2px var(--signal); }
+.pv-scroll { flex: 1; min-width: 0; overflow: auto; outline: none; background: var(--well); }
+.pv-pages { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 14px 20px 40px; min-width: min-content; }
+.pv-page {
+  position: relative; flex: none; background: #fff; border-radius: 2px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .28), 0 0 0 1px rgba(0, 0, 0, .06);
+}
+.pv-page canvas { position: absolute; inset: 0; display: block; }
+.pv-pnum {
+  position: absolute; right: -2px; bottom: -20px; font: 10.5px var(--font-num); color: var(--faint); pointer-events: none;
+}
+.pv.dark .pv-page { background: #1b1b1b; }
+.pv.dark .pv-page canvas, .pv.dark .pv-thumb canvas { filter: invert(.9) hue-rotate(180deg); }
+
+/* 画像にする: ビューアの右上に出る小さなシート */
+.pv-sheet {
+  position: absolute; right: 10px; top: 46px; z-index: 30; width: 300px; border-radius: var(--r-l);
+  background: var(--solid-2); box-shadow: var(--shadow);
+}
+.pv-sheet .form { padding: 14px; }
+.pv-sheet-title { font-weight: 600; }
+
+/* ---------- PDF.js の文字の層（文字の選択・検索に使う。PDF.js の pdf_viewer.css から必要な部分だけ） ---------- */
+.textLayer {
+  position: absolute; text-align: initial; inset: 0; overflow: clip; opacity: 1; line-height: 1;
+  text-size-adjust: none; forced-color-adjust: none; transform-origin: 0 0; caret-color: CanvasText; z-index: 0;
+}
+.textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+.textLayer > :not(.markedContent), .textLayer .markedContent span:not(.markedContent) { z-index: 1; }
+.textLayer span.markedContent { top: 0; height: 0; }
+.textLayer ::selection { background: rgba(var(--c2-rgb), .35); }
+.textLayer br::selection { background: transparent; }
+.textLayer span.pv-hit { background: rgba(255, 200, 0, .45); border-radius: 2px; }
+
+/* ---------- 印刷: 印刷用の絵（#pv-print）だけを出す ---------- */
+#pv-print { display: none; }
+@media print {
+  @page { margin: 0; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  body > *:not(#pv-print) { display: none !important; }
+  body::before, body::after { display: none !important; }
+  #pv-print { display: block; }
+  #pv-print img { display: block; width: 100%; height: auto; break-after: page; }
+  #pv-print img:last-child { break-after: auto; }
+}
+
+/* ---------- 画像ビューア ---------- */
+.iv-pos, .iv-page { padding: 0 4px; font: 12.5px var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.iv-pos:empty { display: none; }
+.iv-pages[hidden] { display: none; }
+.iv-pages { display: contents; }
+.iv-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; padding: 16px; outline: none; cursor: default; }
+.iv-scroll.dragging { cursor: grabbing; }
+.iv-stage { position: relative; flex: none; margin: auto; }
+.iv-img { position: absolute; left: 50%; top: 50%; max-width: none; user-select: none; box-shadow: 0 2px 14px rgba(0, 0, 0, .3); }
+.iv[data-bg="dark"] .iv-scroll { background: #0d0e12; }
+.iv[data-bg="light"] .iv-scroll { background: #f4f5f8; }
+.iv[data-bg="checker"] .iv-scroll {
+  background-color: var(--well);
+  background-image: linear-gradient(45deg, rgba(128, 128, 128, .18) 25%, transparent 25%, transparent 75%, rgba(128, 128, 128, .18) 75%),
+                    linear-gradient(45deg, rgba(128, 128, 128, .18) 25%, transparent 25%, transparent 75%, rgba(128, 128, 128, .18) 75%);
+  background-size: 18px 18px; background-position: 0 0, 9px 9px;
+}
+#pv-print img { object-fit: contain; max-height: 100vh; }
