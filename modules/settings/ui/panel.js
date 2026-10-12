@@ -212,7 +212,10 @@ export async function mount(el, ctx) {
       switchRow(t("set.intro"), "bar.intro", s.intro),
     ));
 
-    root.append(section(t("set.tiles"), tilesEditor(), note(t("set.tilesNote"))));
+    root.append(section(t("set.tiles"),
+      row(t("set.folderMode"), segmented("bar.folders", [["auto", t("set.fmAuto")], ["each", t("set.fmEach")], ["group", t("set.fmGroup")]], s.barFolders || "auto"),
+        t("set.folderModeNote")),
+      tilesEditor(), note(t("set.tilesNote"))));
 
     // Windows の起動時に開く（設定ファイルではなく、スタートアップのショートカットの有無で決まる）
     if (s.windows) {

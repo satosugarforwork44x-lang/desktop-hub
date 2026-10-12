@@ -748,6 +748,7 @@ class Host:
             "mcpCalendar": bool(get_in(c, ("mcp", "calendar"), True)),
             "mcpWeb": bool(get_in(c, ("mcp", "web"), True)),
             "barTiles": dict(get_in(c, ("bar", "tiles"), {}) or {}),
+            "barFolders": get_in(c, ("bar", "folders"), "auto"),
             "mcpPanels": dict(get_in(c, ("mcp", "panels"), {}) or {}),
             "panels": self._folder_panels(),
             "configPath": str(USER_CONFIG),
@@ -776,7 +777,7 @@ class Host:
         after = self.settings_get()
         if (before["dock"], before["labels"]) != (after["dock"], after["labels"]):
             self.recreate_bar()
-        elif before["barTiles"] != after["barTiles"]:
+        elif (before["barTiles"], before["barFolders"]) != (after["barTiles"], after["barFolders"]):
             self.backend.reload("bar")     # タイルの並び・表示だけなら、バーを読み込み直すだけ
         if (before["lang"], before["mode"], before["accent"]) != (after["lang"], after["mode"], after["accent"]):
             self.backend.reload_all()   # 言語・見た目は全部の窓を読み込み直して反映

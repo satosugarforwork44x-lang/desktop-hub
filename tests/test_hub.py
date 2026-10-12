@@ -415,6 +415,15 @@ class SettingsAndBarTest(HubTestBase):
         self.host.bar_set(length=900)                                   # 長さを固定しているときは変えない
         self.assertEqual(self.host.backend.windows["bar"]["geom"][2], 1880)
 
+    def test_folder_display_mode(self):
+        self.host.create_bar()
+        r = self.host.settings_set({"bar.folders": "group"})
+        self.assertEqual(r["settings"]["barFolders"], "group")
+        self.assertEqual(self.host.backend.windows["bar"].get("reloads"), 1)   # バーを読み込み直して反映
+        with self.assertRaises(ModuleError):
+            self.host.settings_set({"bar.folders": "tree"})
+        self.assertEqual(self.host.open_panel("folders")["open"], True)        # 「フォルダ」タイル = 一覧の窓
+
     def test_bar_tiles_order_and_hidden(self):
         self.host.create_bar()
         r = self.host.settings_set({"bar.tiles": {"order": ["web", "folders:WIP", "web"], "hidden": ["notes"]}})

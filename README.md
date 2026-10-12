@@ -61,6 +61,7 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
   a pinned bar sits **behind** other windows (like a desktop widget), so it never covers your work.
 - Drag the clock to slide the bar along the edge (the position is remembered).
 - The bar grows to fit its tiles (up to the screen width). Reorder or hide tiles in **Settings → Bar tiles** (drag the ⋮⋮ handle; the eye shows/hides).
+- Folder panels on the bar (Settings → Bar tiles): **Favorites only** (default — hidden folders open from the Folders tile), **Show all**, or **One tile**. Each folder gets a colored icon with its first letter, so you can tell them apart even as icons.
 - When space runs out, tiles switch to icons only (hover for names).
 - **Hub picks up where you left off**: open panels, their position and size, collapsed state, bar position and 📌 are restored on next launch.
   Panels left on a disconnected monitor are moved back into view.
@@ -87,7 +88,7 @@ ffmpeg is **not bundled** (it is GPL). If you have it, Hub finds `ffmpeg.exe` on
 or set `modules.media.ffmpeg` in the config file. Converted files are saved next to the original (the original is kept).
 
 **Web / PC Monitor**
-Web: ＋ to add a site; right-click to edit, reorder or delete. Mini-window sign-ins are kept inside Hub.
+Web: ＋ to add a site; right-click to edit, reorder or delete. Mini-window sign-ins are kept inside Hub, and downloads ask where to save. For busy sites (GitHub and so on), choose "Chrome / Edge (app window)" — uploads, extensions and your browser sign-ins all work there.
 PC Monitor measures only while its panel is visible. "Network" is live traffic, not a speed test.
 
 **Notes / Timer**

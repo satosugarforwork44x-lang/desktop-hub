@@ -1,14 +1,11 @@
 // folders/ui/panel.js — フォルダ窓（1レジストリ = 1窓）の中身
 import { icons, fileIcon } from "/ui/js/icons.js";
+import { folderBadge } from "/ui/js/tiles.js";
 
 export async function mount(el, ctx) {
   const reg = ctx.instance;
   const t = ctx.t;
-  if (!reg) {
-    el.innerHTML = `<div class="empty"></div>`;
-    el.firstChild.textContent = t("folders.openFromBar");
-    return;
-  }
+  if (!reg) return chooser(el, ctx);
 
   const cache = new Map();          // rel → items（開いたフォルダの中身）
   const expanded = new Set([""]);   // 開いているフォルダ（"" は一番上）
@@ -282,4 +279,65 @@ export async function mount(el, ctx) {
   setInterval(() => { if (document.visibilityState === "visible" && !tree.querySelector("input")) reload(); }, 10000);
 
   await reload();
+}
+
+// ---- 「フォルダ」タイルから開く一覧: 開く・バーに出す/しまう・新しく作る ----
+async function chooser(el, ctx) {
+  const t = ctx.t;
+  el.innerHTML = `<div class="fchooser"><div class="fc-new"><input class="fc-input" maxlength="80"><button class="btn" type="button"></button></div><div class="fc-list"></div><p class="set-note fc-note"></p></div>`;
+  const input = el.querySelector(".fc-input");
+  const add = el.querySelector(".fc-new .btn");
+  input.placeholder = t("bar.folderPlaceholder");
+  add.textContent = t("folders.create");
+  el.querySelector(".fc-note").textContent = t("folders.chooserNote");
+
+  async function create() {
+    const name = input.value.trim();
+    if (!name) return input.focus();
+    try {
+      await ctx.call("create_registry", { name });
+      input.value = "";
+      await render();
+      await ctx.host.openPanel(`folders:${name}`);
+    } catch (e) { ctx.toast(e.message, "error"); }
+  }
+  add.addEventListener("click", create);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) create(); });
+
+  async function render() {
+    const [list, s] = await Promise.all([ctx.call("instances"), ctx.host.settings()]);
+    const hidden = new Set(s.barTiles?.hidden || []);
+    const box = el.querySelector(".fc-list");
+    box.replaceChildren();
+    if (!list.length) {
+      const e = document.createElement("div");
+      e.className = "empty";
+      e.textContent = t("folders.none");
+      box.append(e);
+    }
+    for (const it of list) {
+      const pid = `folders:${it.id}`;
+      const row = document.createElement("div");
+      row.className = "fc-row";
+      row.innerHTML = `<button type="button" class="fc-open">${folderBadge(it.label)}<span class="fc-name"></span></button><button type="button" class="icon-btn fc-pin"></button>`;
+      row.querySelector(".fc-name").textContent = it.label;
+      row.querySelector(".fc-open").addEventListener("click", () => ctx.host.openPanel(pid).catch((e) => ctx.toast(e.message, "error")));
+      const pin = row.querySelector(".fc-pin");
+      const onBar = !hidden.has(pid);
+      pin.innerHTML = onBar ? icons.pin : icons.eyeOff;
+      pin.setAttribute("aria-pressed", String(onBar));
+      pin.title = t(onBar ? "folders.offBar" : "folders.onBar");
+      pin.setAttribute("aria-label", `${it.label}: ${pin.title}`);
+      pin.addEventListener("click", async () => {
+        const next = new Set(hidden);
+        onBar ? next.add(pid) : next.delete(pid);
+        try {
+          await ctx.host.saveSettings({ "bar.tiles": { order: s.barTiles?.order || [], hidden: [...next] } });
+          render();
+        } catch (e) { ctx.toast(e.message, "error"); }
+      });
+      box.append(row);
+    }
+  }
+  await render();
 }

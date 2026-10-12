@@ -109,7 +109,7 @@ function tile(pid, label, icon, title) {
   b.title = title || label;
   b.setAttribute("aria-label", label);
   b.innerHTML = `${icon}<span class="tile-label"></span>`;
-  b.querySelector("span").textContent = label;
+  b.querySelector(".tile-label").textContent = label;
   b.addEventListener("click", () => openPanel(pid));
   return b;
 }
@@ -129,13 +129,27 @@ async function render() {
     b.addEventListener("click", () => openPanel(m.id));
     $("#pin").before(b);
   }
-  // 並び・非表示は設定（バーのタイル）に従う。フォルダ窓を足す「＋」は最後に
+  // 並び・非表示は設定（バーのタイル）に従う。
+  // フォルダ窓の出し方（bar.folders）:
+  //   auto  … 表示にしたフォルダだけ並べ、隠したものがあれば「フォルダ」タイル（一覧）を足す
+  //   each  … 表示にしたフォルダをすべて並べる（一覧のタイルは出さない。新しいフォルダは「＋」）
+  //   group … フォルダは「フォルダ」タイル 1 つにまとめる
+  const mode = ["auto", "each", "group"].includes(barConf.folders) ? barConf.folders : "auto";
   const tiles = $("#tiles");
   tiles.replaceChildren();
-  for (const x of arrange(all, barConf.tiles)) {
-    if (!x.hidden) tiles.append(tile(x.pid, x.label, x.icon, x.title));
-  }
-  if (all.some((x) => x.module === "folders")) {
+  const arranged = arrange(all, barConf.tiles);
+  const folderItems = arranged.filter((x) => x.folder);
+  const showGroup = folderItems.length > 0 && (mode === "group" || (mode === "auto" && folderItems.some((x) => x.hidden)));
+  const lastFolder = arranged.lastIndexOf(folderItems[folderItems.length - 1]);
+  arranged.forEach((x, i) => {
+    if (!x.hidden && !(x.folder && mode === "group")) tiles.append(tile(x.pid, x.label, x.icon, x.title));
+    if (i === lastFolder && showGroup) {
+      const g = tile("folders", t("bar.folders"), icons.folders, t("bar.foldersTip"));
+      g.classList.add("tile-folders");
+      tiles.append(g);
+    }
+  });
+  if (all.some((x) => x.module === "folders") && !showGroup) {   // 一覧のタイルが無いときだけ「＋」を出す（アイコンを増やさない）
     const group = document.createElement("div");
     group.className = "tile-group";
     group.append(addRegistryButton(group));

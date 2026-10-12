@@ -19,7 +19,9 @@ DEFAULTS: dict = {
     # labels: auto（入りきらなければアイコンだけ）/ icons（常にアイコンだけ）/ full（常に文字も出す）
     # length: "auto"（中身に合わせて伸び縮み。画面の幅まで）または数値（px）
     # tiles: タイルの並び（order）と隠すもの（hidden）。値はタイルの id（"web" や "folders:Inbox"）
-    "bar": {"dock": "top", "length": "auto", "onTop": True, "labels": "auto", "intro": True, "tiles": {"order": [], "hidden": []}},
+    # folders: フォルダ窓の出し方。auto（よく使うものだけ並べ、隠したものは「フォルダ」タイルから）/ each（すべて並べる）/ group（「フォルダ」タイル 1 つにまとめる）
+    "bar": {"dock": "top", "length": "auto", "onTop": True, "labels": "auto", "intro": True, "folders": "auto",
+            "tiles": {"order": [], "hidden": []}},
     # corners: round / small / square（Windows 11 の角丸）
     "windows": {"corners": "round"},
     "panels": {"onTop": False},
@@ -37,7 +39,7 @@ USER_CONFIG = user_home() / "hub.config.json"
 LEGACY_CONFIG = APP_ROOT / "hub.config.json"   # 0.4 までの置き場所（アプリの中）
 # 設定画面から変えてよい項目（これ以外は書き換えない）
 EDITABLE = {
-    ("lang",): str, ("appearance", "mode"): str, ("appearance", "accent"): str, ("bar", "dock"): str, ("bar", "labels"): str, ("bar", "intro"): bool, ("bar", "tiles"): dict, ("windows", "corners"): str,
+    ("lang",): str, ("appearance", "mode"): str, ("appearance", "accent"): str, ("bar", "dock"): str, ("bar", "labels"): str, ("bar", "intro"): bool, ("bar", "tiles"): dict, ("bar", "folders"): str, ("windows", "corners"): str,
     ("modules", "folders", "root"): str, ("mcp", "calendar"): bool, ("mcp", "web"): bool, ("mcp", "panels"): dict,
 }
 MCP_ACCESS = {"hidden", "read", "write"}
@@ -45,6 +47,7 @@ CHOICES = {
     ("lang",): {"auto", "ja", "en"}, ("appearance", "mode"): {"auto", "dark", "light"},
     ("appearance", "accent"): {"aurora", "ocean", "ember", "graphite"}, ("bar", "dock"): {"top", "bottom", "left", "right"},
     ("bar", "labels"): {"auto", "icons", "full"}, ("windows", "corners"): {"round", "small", "square"},
+    ("bar", "folders"): {"auto", "each", "group"},
 }
 
 

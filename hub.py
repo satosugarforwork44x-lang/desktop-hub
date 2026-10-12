@@ -104,6 +104,11 @@ def main() -> int:
     from host.app import PywebviewBackend, set_app_id, window_bg
     import webview
 
+    try:  # Web ショートカットのミニ窓でのダウンロードを許可する（保存先を聞く画面が出る）
+        webview.settings["ALLOW_DOWNLOADS"] = True
+    except (AttributeError, TypeError):
+        pass  # 古い pywebview には settings が無い
+
     set_app_id()
 
     # 黒い画面なし(pythonw)で起動したときは、メッセージを data/hub.log に残す（不具合調査用）
