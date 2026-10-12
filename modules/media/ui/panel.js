@@ -41,7 +41,7 @@ export async function mount(el, ctx) {
   const vol = $(".mp-vol");
   const tip = (a, ico, k) => { const b = btn(a); b.innerHTML = ico; b.title = t(k); b.setAttribute("aria-label", t(k)); };
   tip("prev", icons.skipBack, "media.prev"); tip("next", icons.skipFwd, "media.next");
-  tip("add", icons.plus, "media.add"); tip("clear", icons.trash, "media.clear"); tip("full", icons.expand, "media.full");
+  tip("add", icons.plus, "media.add"); tip("clear", icons.trash, "media.clear"); tip("full", icons.fullscreen, "media.full");
   $(".mp-empty .drop-ico").innerHTML = icons.play;
   $(".mp-empty .drop-text").textContent = t("media.drop");
   $(".mp-empty .drop-or").textContent = t("action.or");

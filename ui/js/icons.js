@@ -42,9 +42,28 @@ export const icons = {
   repeatOne: svg('<path d="M17 2.5 20.5 6 17 9.5"/><path d="M3.5 11V9a3 3 0 0 1 3-3h14"/><path d="M7 21.5 3.5 18 7 14.5"/><path d="M20.5 13v2a3 3 0 0 1-3 3h-14"/><path d="M11.2 10.2 12.5 9.5v5"/>'),
   volume: svg('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11"/>'),
   mute: svg('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>'),
-  expand: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+  fullscreen: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
   video: svg('<rect x="3" y="5.5" width="13" height="13" rx="2"/><path d="m16 10.5 5-3v9l-5-3"/>'),
   music: svg('<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'),
+  // ---- 拡張アプリ用（使わなければそのままでよい） ----
+  // 写真の編集
+  photoEdit: svg('<path d="M20 12.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6.5"/><path d="m4.5 17.5 4.5-4.5 3 3 2-2 5.5 5"/><path d="m15.5 8.5 4.5-4.5 1.5 1.5-4.5 4.5-2 .5z"/>'),
+  adjust: svg('<path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/>'),
+  crop: svg('<path d="M6.5 2.5v13a2 2 0 0 0 2 2h13"/><path d="M2.5 6.5h13a2 2 0 0 1 2 2v13"/>'),
+  wand: svg('<path d="m4 20 11-11"/><path d="m14 7 3 3"/><path d="M17.5 2.5v3M16 4h3M20.5 8.5v2.5M19.25 9.75h2.5M10 3v2M9 4h2"/>'),
+  layers: svg('<path d="m12 3.5 9 4.5-9 4.5L3 8z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16 9 4.5 9-4.5"/>'),
+  // 動画の編集
+  film: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 8h4M3 12h4M3 16h4M17 8h4M17 12h4M17 16h4"/>'),
+  videoEdit: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="m10.5 7.5 4 2.5-4 2.5z"/><path d="M3 19.5h18"/><path d="M8 18v3M15 18v3"/>'),
+  timeline: svg('<path d="M3 5h18"/><rect x="3" y="8.5" width="9" height="4" rx="1"/><rect x="9" y="15" width="12" height="4" rx="1"/><path d="M14.5 3v18"/>'),
+  scissors: svg('<circle cx="6" cy="7" r="2.6"/><circle cx="6" cy="17" r="2.6"/><path d="M8.2 8.4 20 17M8.2 15.6 20 7"/>'),
+  // 3D の簡易ビューア
+  cube: svg('<path d="m12 2.8 8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><path d="m4 7.4 8 4.6 8-4.6M12 12v9.2"/>'),
+  axes3d: svg('<path d="M12 13V3.5M12 13l8 4.5M12 13l-8 4.5"/><path d="m9.5 6 2.5-2.5L14.5 6"/><path d="m17 18.6 3-1.1-.7-3.1"/><path d="m4.7 14.4-.7 3.1 3 1.1"/>'),
+  orbit3d: svg('<path d="m12 7.5 4 2.3v4.4l-4 2.3-4-2.3V9.8z"/><path d="M8 9.8l4 2.3 4-2.3M12 12.1v4.4"/><path d="M20.5 9.5A9 9 0 0 0 5 5.5"/><path d="M3.5 14.5A9 9 0 0 0 19 18.5"/><path d="m5 2.8.1 2.9 2.8-.4M19 21.2l-.1-2.9-2.8.4"/>'),
+  mesh: svg('<path d="m12 3 7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 3v6.5M19.8 7.5 15 12.2M19.8 16.5 15 12.2M12 21v-6.5M4.2 16.5 9 12.2M4.2 7.5 9 12.2"/><path d="m12 9.5 3 2.7-3 2.3-3-2.3z"/>'),
+  // 鍵盤（サウンドスケッチ）
+  pianoKeys: svg('<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9 13.5v6M15 13.5v6"/><rect x="7.2" y="4.5" width="3.6" height="9" rx=".9" fill="currentColor" stroke="none"/><rect x="13.2" y="4.5" width="3.6" height="9" rx=".9" fill="currentColor" stroke="none"/>'),
   globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'),
   gauge: svg('<path d="M4.5 18a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4-4.5"/><circle cx="12" cy="13.5" r="1.3" fill="currentColor"/>'),
   window: svg('<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 8.5h18"/>'),
