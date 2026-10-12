@@ -13,6 +13,7 @@ import argparse
 import json
 import os
 import sys
+import threading
 from pathlib import Path
 
 from host.app import Host, NullBackend
@@ -126,6 +127,8 @@ def main() -> int:
 
     def on_start():
         host.restore_panels()
+        # ショートカット（起動時に開く・スタートメニュー・デスクトップ）を今の場所に合わせ直す（裏で。起動を待たせない）
+        threading.Thread(target=host.repair_shortcuts, daemon=True).start()
         if args.open_file:
             try:
                 host.open_file(args.open_file)

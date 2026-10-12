@@ -40,7 +40,7 @@ Claude can use it too, through MCP, within the limits you set.
    ```bat
    py -m pip install --user -r requirements.txt
    ```
-3. Double-click `start_hub.bat`.
+3. Double-click `start_hub.bat` **once**, then turn on Settings (⚙) → Startup → "Add Hub to the Start menu" so you can open Hub like any other app.
 
 No config file is needed. On first launch Hub creates **`Hub\Inbox`** in your user folder (e.g. `C:\Users\you\Hub\Inbox`)
 and shows it on the bar. You can change the location in **Settings (⚙ on the bar)**.
@@ -51,7 +51,8 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
 | Start | `start_hub.bat` (no console window) |
 | Troubleshoot | Start with `start_hub_debug.bat` to see errors. They're also logged to `%LOCALAPPDATA%\Hub\data\hub.log` |
 | Quit | ⏻ at the end of the bar |
-| Start with Windows | Settings (⚙) → Startup → "Open Hub when Windows starts" (creates a shortcut with the Hub icon) |
+| Start with Windows | Settings (⚙) → Startup → "Open Hub when Windows starts" |
+| App icon | Settings (⚙) → Startup → "Add Hub to the Start menu" / "Put a Hub icon on the desktop". From the Start menu you can also pin Hub to the taskbar. No need to open the `.bat` again |
 
 ## Using Hub
 

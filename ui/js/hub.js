@@ -41,6 +41,7 @@ export const host = {
   pickFolder: (id) => api("host/pick_folder", { id }),
   restart: () => api("host/restart"),
   setAutostart: (on) => api("host/autostart", { on }),
+  setShortcut: (where, on) => api("host/shortcut", { where, on }),
 };
 
 // 本物の窓（pywebview）の中か、ブラウザでの確認表示か

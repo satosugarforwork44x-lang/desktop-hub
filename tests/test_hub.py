@@ -394,6 +394,16 @@ class SettingsAndBarTest(HubTestBase):
             with self.assertRaises(ModuleError):
                 self.host.settings_set(bad)
 
+    def test_shortcut_settings_outside_windows(self):
+        import os
+        st = self.host.settings_get()["shortcuts"]
+        self.assertEqual(set(st), {"startup", "startmenu", "desktop"})
+        if os.name != "nt":
+            self.assertFalse(any(st.values()))
+            with self.assertRaises(ModuleError):
+                self.host.set_shortcut("startmenu", True)
+            self.assertEqual(self.host.repair_shortcuts(), [])
+
     def test_bar_grows_to_fit_its_tiles(self):
         self.host.config["bar"]["length"] = "auto"
         self.host.create_bar()

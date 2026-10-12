@@ -216,16 +216,24 @@ export async function mount(el, ctx) {
 
     // Windows の起動時に開く（設定ファイルではなく、スタートアップのショートカットの有無で決まる）
     if (s.windows) {
-      const auto = switchRow(t("set.autostart"), null, s.autostart);
-      auto.querySelector(".switch").addEventListener("click", async () => {
-        try {
-          await ctx.host.setAutostart(!s.autostart);
-          s = await ctx.host.settings();
-          render();
-          ctx.toast(t("set.saved"));
-        } catch (e) { ctx.toast(e.message, "error", 6000); }
-      });
-      root.append(section(t("set.startup"), auto));
+      // Windows の起動時に開く・スタートメニュー・デスクトップ（設定ファイルではなく、ショートカットの有無で決まる）
+      const sc = (label, where) => {
+        const r = switchRow(label, null, !!s.shortcuts?.[where]);
+        r.querySelector(".switch").addEventListener("click", async () => {
+          try {
+            await ctx.host.setShortcut(where, !s.shortcuts?.[where]);
+            s = await ctx.host.settings();
+            render();
+            ctx.toast(t("set.saved"));
+          } catch (e) { ctx.toast(e.message, "error", 6000); }
+        });
+        return r;
+      };
+      root.append(section(t("set.startup"),
+        sc(t("set.autostart"), "startup"),
+        sc(t("set.startMenu"), "startmenu"),
+        sc(t("set.desktopIcon"), "desktop"),
+        note(t("set.shortcutNote"))));
     }
 
     // フォルダの場所

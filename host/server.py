@@ -100,6 +100,7 @@ class HubServer:
                 "pick_folder": lambda: host.pick_folder(pid),
                 "restart": lambda: host.restart(),
                 "autostart": lambda: host.set_autostart(bool(body.get("on"))),
+                "shortcut": lambda: host.set_shortcut(str(body.get("where", "")), bool(body.get("on"))),
                 "open_file": lambda: host.open_file(str(body.get("path", ""))),
                 "open_web": lambda: host.open_web(pid, str(body.get("url", "")), str(body.get("title", ""))),
             }

@@ -741,6 +741,7 @@ class Host:
             "mode": get_in(c, ("appearance", "mode"), "dark"),
             "accent": get_in(c, ("appearance", "accent"), "aurora"),
             "autostart": self.autostart(),
+            "shortcuts": self.shortcuts(),
             "windows": os.name == "nt",
             "foldersRoot": get_in(c, ("modules", "folders", "root"), "~/Hub"),
             "foldersRootResolved": str(Path(str(get_in(c, ("modules", "folders", "root"), "~/Hub"))).expanduser()),
@@ -785,22 +786,33 @@ class Host:
         restart = before["foldersRoot"] != after["foldersRoot"]
         return {"settings": after, "restart": restart}
 
-    # ---------- Windows のショートカット（起動時に開く） ----------
+    # ---------- Windows のショートカット（起動時に開く・スタートメニュー・デスクトップ） ----------
+    # 置き場所は Windows に尋ねる（デスクトップが OneDrive の中に移されていても正しく置ける）
+    _CSIDL = {"startup": 7, "startmenu": 2, "desktop": 16}   # Startup / Programs / DesktopDirectory
+
+    @classmethod
+    def _shortcut_path(cls, where: str) -> Path:
+        if os.name == "nt":
+            import ctypes
+            buf = ctypes.create_unicode_buffer(260)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, cls._CSIDL[where], None, 0, buf) == 0:
+                return Path(buf.value) / "Hub.lnk"
+        base = Path(os.environ.get("APPDATA", "~")).expanduser() / "Microsoft/Windows/Start Menu/Programs"
+        return {"startup": base / "Startup", "startmenu": base, "desktop": Path.home() / "Desktop"}[where] / "Hub.lnk"
+
     @staticmethod
-    def _startup_lnk() -> Path:
-        return Path(os.environ.get("APPDATA", "~")).expanduser() / "Microsoft/Windows/Start Menu/Programs/Startup/Hub.lnk"
+    def _startup_lnk() -> Path:      # 互換のため残す
+        return Host._shortcut_path("startup")
+
+    def shortcuts(self) -> dict:
+        return {w: os.name == "nt" and self._shortcut_path(w).exists() for w in self._CSIDL}
 
     def autostart(self) -> bool:
-        return os.name == "nt" and self._startup_lnk().exists()
+        return self.shortcuts()["startup"]
 
-    def set_autostart(self, on: bool) -> dict:
-        """Windows の起動時に Hub を開く（スタートアップにアイコン付きのショートカットを置く／消す）。"""
-        if os.name != "nt":
-            raise ModuleError("Windows でだけ使えます")
-        lnk = self._startup_lnk()
-        if not on:
-            lnk.unlink(missing_ok=True)
-            return {"autostart": False}
+    @staticmethod
+    def _write_shortcut(lnk: Path) -> None:
+        """今の Hub（この場所の hub.py）を、黒い画面なしで開くショートカットを作る。"""
         root = Path(__file__).resolve().parent.parent
         pyw = Path(sys.executable).with_name("pythonw.exe")
         target = pyw if pyw.exists() else Path(sys.executable)
@@ -816,7 +828,38 @@ class Host:
                            capture_output=True, text=True, timeout=20, creationflags=0x08000000)  # CREATE_NO_WINDOW
         if r.returncode != 0 or not lnk.exists():
             raise ModuleError(f"ショートカットを作れませんでした: {(r.stderr or r.stdout).strip()[:200]}")
-        return {"autostart": True}
+
+    def set_shortcut(self, where: str, on: bool) -> dict:
+        """where: startup（Windows の起動時に開く）/ startmenu（スタートメニュー。検索・タスクバーへのピン留めもここから）/ desktop"""
+        if os.name != "nt":
+            raise ModuleError("Windows でだけ使えます")
+        if where not in self._CSIDL:
+            raise ModuleError(f"不明な場所: {where}")
+        lnk = self._shortcut_path(where)
+        if on:
+            self._write_shortcut(lnk)
+        else:
+            lnk.unlink(missing_ok=True)
+        return self.shortcuts()
+
+    def set_autostart(self, on: bool) -> dict:
+        self.set_shortcut("startup", on)
+        return {"autostart": on}
+
+    def repair_shortcuts(self) -> list[str]:
+        """起動のたびに、今あるショートカットを今の場所で作り直す。
+        アプリのフォルダを移動・更新しても、「起動時に開く」やアイコンが古い場所を指したまま動かなくなることを防ぐ。"""
+        fixed = []
+        if os.name != "nt":
+            return fixed
+        for where, exists in self.shortcuts().items():
+            if exists:
+                try:
+                    self._write_shortcut(self._shortcut_path(where))
+                    fixed.append(where)
+                except Exception:
+                    pass
+        return fixed
 
     def pick_folder(self, pid: str) -> str | None:
         return self.backend.pick_folder(pid)
