@@ -1,6 +1,5 @@
 // folders/ui/panel.js — フォルダ窓（1レジストリ = 1窓）の中身
 import { icons, fileIcon } from "/ui/js/icons.js";
-import { folderBadge } from "/ui/js/tiles.js";
 
 export async function mount(el, ctx) {
   const reg = ctx.instance;
@@ -319,7 +318,7 @@ async function chooser(el, ctx) {
       const pid = `folders:${it.id}`;
       const row = document.createElement("div");
       row.className = "fc-row";
-      row.innerHTML = `<button type="button" class="fc-open">${folderBadge(it.label)}<span class="fc-name"></span></button><button type="button" class="icon-btn fc-pin"></button>`;
+      row.innerHTML = `<button type="button" class="fc-open">${icons.folder}<span class="fc-name"></span></button><button type="button" class="icon-btn fc-pin"></button>`;
       row.querySelector(".fc-name").textContent = it.label;
       row.querySelector(".fc-open").addEventListener("click", () => ctx.host.openPanel(pid).catch((e) => ctx.toast(e.message, "error")));
       const pin = row.querySelector(".fc-pin");

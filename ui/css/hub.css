@@ -639,17 +639,6 @@ body.intro .bar-end { animation: intro-in .38s ease .48s both; }
 .set-eye[aria-pressed="true"] { background: transparent; color: var(--muted); }
 .set-eye[aria-pressed="true"]:hover { background: var(--ink-3); color: var(--text); }
 
-/* フォルダ窓のアイコン: 色付きのフォルダ＋頭文字 */
-.fbadge { position: relative; display: grid; place-items: center; width: 18px; height: 18px; flex: none; }
-.fbadge .icon { width: 18px; height: 18px; color: var(--fc); }
-.fbadge b {
-  position: absolute; inset: 4px 0 0; display: grid; place-items: center;
-  font: 700 8.5px/1 var(--font-num); color: #fff; text-shadow: 0 0 2px rgba(0, 0, 0, .35); pointer-events: none;
-}
-.bar.icons-only .fbadge, .vertical .fbadge { width: 22px; height: 22px; }
-.bar.icons-only .fbadge .icon, .vertical .fbadge .icon { width: 22px; height: 22px; }
-.bar.icons-only .fbadge b, .vertical .fbadge b { font-size: 10.5px; inset: 5px 0 0; }
-
 /* 「フォルダ」タイルから開く一覧 */
 .fchooser { display: grid; gap: 12px; padding: 4px 12px 18px; }
 .fc-new { display: flex; gap: 8px; }
