@@ -369,17 +369,30 @@ addEventListener("resize", () => fit());
 // 文字を出した状態（設定が「アイコンだけ」ならアイコンの状態）で全部が入る長さを測り、Hub に知らせる。
 // 画面の幅を超える分は Hub が画面の幅で止め、その中で fit() が詰める
 let lenTimer = null;
+// 中身だけの長さを測る。バーを「中身の幅（max-content）」にして測るので、今のバーの長さには左右されない。
+// （以前は今の長さを基に測っていたため、余白を足すたびに少しずつ伸び続けていた）
+export function measureNeed(bar, tiles, isVertical) {
+  const keep = [...bar.classList].filter((c) => ["tight", "tighter", "overflow"].includes(c) || (c === "icons-only" && !isVertical && labelsMode !== "icons"));
+  bar.classList.remove(...keep);                     // 詰める前の、本来の長さで測る
+  const prop = isVertical ? "height" : "width";
+  const saved = [bar.style[prop], tiles.style.flex, tiles.style[prop]];
+  bar.style[prop] = "max-content";
+  tiles.style.flex = "none";
+  tiles.style[prop] = "max-content";
+  const need = isVertical ? bar.scrollHeight : bar.scrollWidth;
+  [bar.style[prop], tiles.style.flex, tiles.style[prop]] = saved;
+  bar.classList.add(...keep);
+  return Math.ceil(need);
+}
+let lastLen = 0;
 function autoLength() {
   clearTimeout(lenTimer);
   lenTimer = setTimeout(() => {
     if ((barConf.length ?? "auto") !== "auto" || document.body.classList.contains("collapsed") || !isNative()) return;
-    const bar = $("#bar"), tiles = $("#tiles");
-    const keep = [...bar.classList].filter((c) => ["tight", "tighter", "overflow"].includes(c) || (c === "icons-only" && !vertical && labelsMode !== "icons"));
-    bar.classList.remove(...keep);                     // 詰める前の、本来の長さで測る
-    const need = vertical ? bar.offsetHeight - tiles.clientHeight + tiles.scrollHeight
-      : bar.offsetWidth - tiles.clientWidth + tiles.scrollWidth;
-    bar.classList.add(...keep);
-    host.bar({ length: Math.ceil(need) + 4 }).catch(() => {});
+    const need = measureNeed($("#bar"), $("#tiles"), vertical);
+    if (Math.abs(need - lastLen) < 3) return;          // 同じ長さなら知らせない（揺れ・無駄な窓の動きを防ぐ）
+    lastLen = need;
+    host.bar({ length: need }).catch(() => {});
   }, 120);
 }
 

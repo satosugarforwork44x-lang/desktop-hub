@@ -18,10 +18,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 try:  # mcp 2.x
-    from mcp.server.mcpserver import MCPServer
+    from mcp.server.mcpserver import Image, MCPServer
     from mcp.server.mcpserver.exceptions import ToolError
 except ImportError:  # mcp 1.x
     from mcp.server.fastmcp import FastMCP as MCPServer
+    from mcp.server.fastmcp import Image
     from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
@@ -36,7 +37,8 @@ INSTRUCTIONS = (
     "Use calendar_* to answer questions about the user's schedule. Use folders_* to find, read or tidy files, "
     "and save deliverables with folders_write_text into a panel whose access is 'write' (see folders_list_panels). "
     "Paths are relative to a folder panel. Moves never overwrite (a ' (2)' suffix is added) and can be undone "
-    "with folders_undo. Ask before moving many files. web_shortcuts lists sites the user follows (e.g. news)."
+    "with folders_undo. Ask before moving many files. web_shortcuts lists sites the user follows (e.g. news). "
+    "To look at a picture in a panel, use folders_read_image (only if the user has turned image sharing on)."
 )
 
 
@@ -154,6 +156,26 @@ def create_server(config: dict | None = None, reload=None) -> tuple[MCPServer, o
         PDFs are returned page by page ('--- p.N ---'); scanned pages without text are listed in 'scannedPages'
         with a hint (Hub's PDF viewer can OCR them into a .txt). Large files are truncated."""
         return call("folders", "read_text", registry=need(panel, "read"), rel=path, max_chars=max_chars)
+
+    # ---------- 画像を見る（設定の mcp.images が ON のときだけ。既定は OFF） ----------
+    def images_shared() -> bool:
+        try:
+            return bool(get_in(reload(), ("mcp", "images"), False))
+        except Exception:
+            return bool(get_in(config, ("mcp", "images"), False))
+
+    @mcp.tool(annotations=_annotations(True))
+    def folders_read_image(panel: str, path: str, max_px: int = 1568) -> list:
+        """View an image file (jpg, png, webp, gif, bmp, tif, and camera RAW) from a shared panel.
+        The image is resized so its longer side is at most `max_px` (256-2048) and sent as JPEG."""
+        reg = need(panel, "read")
+        if not images_shared():
+            raise ToolError("the user has not allowed Claude to view images (Hub settings: Claude integration > share images)")
+        r = call("folders", "read_image", registry=reg, rel=path, max_px=max_px)
+        import base64
+        meta = (f"{r['rel']} — {r['format']}, original {r['width']}x{r['height']}px, "
+                f"sent {r['sentWidth']}x{r['sentHeight']}px")
+        return [Image(data=base64.b64decode(r["data"]), format="jpeg"), meta]
 
     # ---------- フォルダ窓（書き込み: write にしたフォルダ窓があるときだけ道具を見せる） ----------
     if True:  # 書き込みの道具（使えるのは「読み書き」にしたフォルダ窓だけ。呼ばれたときに判定）

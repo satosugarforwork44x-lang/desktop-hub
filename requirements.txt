@@ -1,7 +1,8 @@
 pywebview>=5.0      # 画面（Windows標準のWebView2を使う窓）
 send2trash>=1.8     # 削除をごみ箱経由にする（完全削除しない）
 pymupdf>=1.24       # ビューア: PDF を画像・テキストにする（AGPL-3.0。同梱しない）
-pillow>=10.0        # ビューア: TIFF の表示・画像の保存（MIT-CMU）
+pillow>=10.0        # ビューア: TIFF の表示・画像の保存、Claude に見せる画像（MIT-CMU）
+# rawpy             # 任意: Claude にカメラの RAW を見せる（MIT。LibRaw は LGPL-2.1/CDDL-1.0）
 icalendar>=5.0      # calendar: iCal の読み込み（BSD-2-Clause）
 python-dateutil>=2.8 # calendar: 繰り返し予定の展開（Apache-2.0 / BSD）
 mcp>=1.10           # Claude 連携（hub_mcp.py）。使わないなら入れなくてよい（MIT）

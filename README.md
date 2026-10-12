@@ -122,10 +122,11 @@ You choose the access level per folder panel. **By default, nothing is shared.**
 - **Deleting is never allowed**, at any level. Files outside the folder panels are never touched.
 - The calendar can be shared or hidden with "Share calendar with Claude" (on by default).
 - Your Web shortcut list (names and URLs only) can be shared or hidden the same way (on by default). Hub never fetches the pages for Claude.
+- **Share images with Claude** (off by default): lets Claude view images in panels it can read (jpg / png / webp / gif / bmp / tif, and camera RAW with the optional `rawpy`). Images are shrunk to at most 1568 px (up to 2048) and **sent to Claude** as JPEG.
 
 > 💡 Suggested setup: put files to process in `Inbox` (Read), and let Claude write results to `Outbox` (Read & write).
 
-> ⚠️ Hub itself runs entirely on your PC, but when Claude uses these tools, **event titles, file names and the text you let it read are sent to Claude**.
+> ⚠️ Hub itself runs entirely on your PC, but when Claude uses these tools, **event titles, file names, the text you let it read, and (if enabled) images are sent to Claude**.
 > The MCP server works even when the Hub bar isn't running.
 
 ## Updating
@@ -162,6 +163,7 @@ Changes made in Settings are saved to `%LOCALAPPDATA%\Hub\hub.config.json` (crea
 | `mcp.panels` | folder panels shared with Claude (e.g. `{"Inbox": "read", "Outbox": "write"}`) | `{}` (none) |
 | `mcp.calendar` | share the calendar with Claude | `true` |
 | `mcp.web` | share the Web shortcut list with Claude | `true` |
+| `mcp.images` | let Claude view images in shared panels | `false` |
 | `modules.media.ffmpeg` | path to your `ffmpeg.exe` (only for converting) | found automatically |
 
 ## Project layout
@@ -217,7 +219,8 @@ Third-party libraries (each under its own license):
 | Send2Trash | Recycle Bin | BSD-3-Clause |
 | PDF.js | PDF viewer (bundled in `modules/pdf/ui/vendor/pdfjs`) | Apache-2.0 |
 | PyMuPDF | PDF to image / text | **AGPL-3.0** (not bundled; installed separately via pip) |
-| Pillow | image output | MIT-CMU |
+| Pillow | image output, images for Claude | MIT-CMU |
+| rawpy (optional) | camera RAW for Claude | MIT (bundles LibRaw: LGPL-2.1 / CDDL-1.0) — not bundled, install with pip |
 | icalendar / python-dateutil | calendar | BSD-2-Clause / Apache-2.0 & BSD |
 | mcp | Claude integration | MIT |
 | psutil | PC Monitor | BSD-3-Clause |

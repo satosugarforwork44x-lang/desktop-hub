@@ -196,6 +196,21 @@ class Registry:
                 raise ModuleError(str(e))
             raise
 
+    def call_upload(self, mid: str, fn: str, data: bytes, args: dict | None) -> Any:
+        """画面から送られたバイト列を、モジュールの関数に渡す（manifest の hub.upload に書いた関数だけ）。
+        引数（args）はクエリ文字列から来るので、すべて文字列。保存先のパスはモジュール側で決める。"""
+        mod = self.get(mid)
+        if mod.api is None or fn not in (mod.hub.get("upload") or []) or not callable(getattr(mod.api, fn, None)):
+            raise ModuleError(f"{mid}.{fn} はファイルを受け付けない（manifest の hub.upload に無い）")
+        try:
+            return getattr(mod.api, fn)(data, **(args or {}))
+        except TypeError as e:
+            raise ModuleError(f"{mid}.{fn} の引数が違う: {e}")
+        except Exception as e:
+            if type(e).__module__ == mod.api.__name__:
+                raise ModuleError(str(e))
+            raise
+
     # ---------- L1: CLIアクションの実行 ----------
     def run_action(self, mid: str, action_id: str, file: str, params: dict | None, timeout: int = 900) -> dict:
         mod = self.get(mid)

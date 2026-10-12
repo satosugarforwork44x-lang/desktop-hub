@@ -874,3 +874,175 @@ class ScriptSyntaxTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ImageToolTest(HubTestBase):
+    """folders.read_image と MCP の folders_read_image（0.8.0）。画像は mcp.images が ON のときだけ Claude に見せる。"""
+
+    def setUp(self):
+        super().setUp()
+        try:
+            from PIL import Image
+        except ImportError:
+            self.skipTest("Pillow が入っていない")
+        big = Image.new("RGB", (3000, 2000), (200, 30, 30))
+        big.save(self.reg_root / "WIP" / "big.png")
+        rot = Image.new("RGB", (400, 200), (0, 0, 255))
+        exif = rot.getexif()
+        exif[0x0112] = 6                                     # 「90 度回して見る」写真
+        rot.save(self.reg_root / "WIP" / "rot.jpg", exif=exif)
+
+    def _decode(self, r):
+        import base64
+        import io
+        from PIL import Image
+        return Image.open(io.BytesIO(base64.b64decode(r["data"])))
+
+    def test_resized_to_jpeg(self):
+        r = self.call("read_image", registry="WIP", rel="big.png", max_px=1000)
+        im = self._decode(r)
+        self.assertEqual(im.format, "JPEG")
+        self.assertLessEqual(max(im.size), 1000)
+        self.assertEqual((r["width"], r["height"]), (3000, 2000))
+        r = self.call("read_image", registry="WIP", rel="big.png", max_px=99999)
+        self.assertLessEqual(max(self._decode(r).size), 2048)       # 上限に丸める
+
+    def test_exif_orientation_applied(self):
+        im = self._decode(self.call("read_image", registry="WIP", rel="rot.jpg"))
+        self.assertGreater(im.size[1], im.size[0])                 # 縦長に直っている
+
+    def test_refuses_non_image_and_escape(self):
+        with self.assertRaises(ModuleError):
+            self.call("read_image", registry="WIP", rel="a.txt")
+        (self.outside / "x.png").write_bytes((self.reg_root / "WIP" / "big.png").read_bytes())
+        with self.assertRaises(ModuleError):
+            self.call("read_image", registry="WIP", rel="../../desktop/x.png")
+
+    def test_raw_without_rawpy_explains(self):
+        (self.reg_root / "WIP" / "photo.dng").write_bytes(b"II*\x00fake")
+        saved = sys.modules.get("rawpy")
+        sys.modules["rawpy"] = None                                # 入っていない状態にする
+        try:
+            with self.assertRaises(ModuleError) as cm:
+                self.call("read_image", registry="WIP", rel="photo.dng")
+            self.assertIn("rawpy", str(cm.exception))
+        finally:
+            if saved is None:
+                sys.modules.pop("rawpy", None)
+            else:
+                sys.modules["rawpy"] = saved
+
+    def test_without_pillow_only_this_tool_fails(self):
+        saved = {k: v for k, v in sys.modules.items() if k == "PIL" or k.startswith("PIL.")}
+        for k in saved:
+            del sys.modules[k]
+        sys.modules["PIL"] = None
+        try:
+            with self.assertRaises(ModuleError) as cm:
+                self.call("read_image", registry="WIP", rel="big.png")
+            self.assertIn("Pillow", str(cm.exception))
+            self.assertTrue(self.call("list_dir", registry="WIP"))  # 他の道具は動く
+        finally:
+            del sys.modules["PIL"]
+            sys.modules.update(saved)
+
+    def _mcp(self, panels, images):
+        try:
+            import hub_mcp
+        except ImportError:
+            self.skipTest("mcp が入っていない")
+        import copy
+        cfg = copy.deepcopy(self.config)
+        cfg["dataDir"] = str(Path(self.tmp.name) / "data_mcp")
+        cfg["mcp"] = {"panels": panels, "calendar": False, **({} if images is None else {"images": images})}
+        return hub_mcp.create_server(cfg)[0]
+
+    def test_mcp_images_off_by_default(self):
+        from host.config import DEFAULTS
+        self.assertFalse(DEFAULTS["mcp"]["images"])
+        call = McpTest._call
+        _, err = call(self, self._mcp({"WIP": "read"}, None), "folders_read_image", {"panel": "WIP", "path": "big.png"})
+        self.assertTrue(err)
+
+    def test_mcp_hidden_panel_refused(self):
+        _, err = McpTest._call(self, self._mcp({}, True), "folders_read_image", {"panel": "WIP", "path": "big.png"})
+        self.assertTrue(err)
+
+    def test_mcp_returns_image(self):
+        r, err = McpTest._call(self, self._mcp({"WIP": "read"}, True), "folders_read_image",
+                               {"panel": "WIP", "path": "big.png", "max_px": 512})
+        self.assertFalse(err, r)
+        text = repr(r)
+        self.assertIn("image/jpeg", text)
+        self.assertIn("3000x2000", text)
+
+    _run = McpTest._run
+
+
+class UploadTest(HubTestBase):
+    """/upload/<module>/<fn>: 画面からモジュールへバイト列をそのまま送る（0.8.0）。"""
+
+    def setUp(self):
+        t = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(t, ignore_errors=True))
+        mod = t / "upmod"
+        (mod / "ui").mkdir(parents=True)
+        (mod / "manifest.json").write_text(json.dumps({
+            "id": "upmod", "name": "up", "version": "0.1.0", "kind": "panel", "runtime": "python", "api": "api.py",
+            "requires": {"hub": ">=0.8", "moduleApi": 1},
+            "hub": {"window": "panel", "ui": "ui/panel.js", "upload": ["save"]},
+            "exports": [{"fn": "other"}]}), encoding="utf-8")
+        (mod / "ui" / "panel.js").write_text("export function mount() {}", encoding="utf-8")
+        (mod / "api.py").write_text(
+            "got = {}\n"
+            "class UpError(Exception):\n    pass\n"
+            "def save(data, name='x'):\n"
+            "    if name == 'bad':\n        raise UpError('名前が悪い')\n"
+            "    got['data'] = data\n    return {'size': len(data), 'name': name}\n"
+            "def other(data=b''):\n    return 1\n", encoding="utf-8")
+        super().setUp()
+        self.server.stop()
+        self.store.close()
+        self.config["modulePaths"].append(str(t))
+        self.host, self.registry, self.server, self.store = build(self.config, NullBackend())
+        self.server.start()
+
+    def up(self, path, data, token=None):
+        req = urllib.request.Request(f"{self.server.base_url}{path}", data=data, method="POST",
+                                     headers={"Content-Type": "application/octet-stream",
+                                              "X-Hub-Token": token if token is not None else self.server.token})
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read())
+
+    def test_bytes_reach_function(self):
+        payload = bytes(range(256)) * 40
+        code, body = self.up("/upload/upmod/save?name=a.png", payload)
+        self.assertEqual((code, body["ok"]), (200, True), body)
+        self.assertEqual(body["data"], {"size": len(payload), "name": "a.png"})
+        self.assertEqual(self.registry.modules["upmod"].api.got["data"], payload)
+
+    def test_token_required(self):
+        code, _ = self.up("/upload/upmod/save", b"x", token="wrong")
+        self.assertEqual(code, 403)
+
+    def test_only_declared_functions(self):
+        for path in ["/upload/upmod/other", "/upload/folders/list_dir", "/upload/nope/save"]:
+            code, body = self.up(path, b"x")
+            self.assertFalse(body["ok"], path)
+
+    def test_module_error_is_readable(self):
+        _, body = self.up("/upload/upmod/save?name=bad", b"x")
+        self.assertEqual(body["error"], "名前が悪い")
+
+    def test_too_large(self):
+        import host.server as srvmod
+        saved = srvmod.UPLOAD_MAX
+        srvmod.UPLOAD_MAX = 16
+        try:
+            code, _ = self.up("/upload/upmod/save", b"y" * 64)
+        finally:
+            srvmod.UPLOAD_MAX = saved
+        self.assertEqual(code, 413)

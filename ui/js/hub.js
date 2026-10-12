@@ -20,6 +20,20 @@ export async function api(path, body = {}) {
 // モジュールの公開関数を呼ぶ（manifest.exports に載っているものだけ）
 export const call = (module, fn, args = {}) => api("call", { module, fn, args });
 
+// ファイル（Blob / ArrayBuffer）をモジュールへそのまま送る（manifest の hub.upload に書いた関数だけ）。
+// args はクエリ文字列で渡る（値は文字列になる）。保存先のパスはモジュール側で決める
+export async function upload(module, fn, blob, args = {}) {
+  const qs = new URLSearchParams(Object.entries(args).map(([k, v]) => [k, String(v)])).toString();
+  const res = await fetch(`/upload/${encodeURIComponent(module)}/${encodeURIComponent(fn)}${qs ? `?${qs}` : ""}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/octet-stream", "X-Hub-Token": TOKEN },
+    body: blob,
+  });
+  const json = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
+  if (!json.ok) throw new HubError(json.error || `HTTP ${res.status}`);
+  return json.data;
+}
+
 // 窓の操作・OS操作
 export const host = {
   config: () => api("host/config"),

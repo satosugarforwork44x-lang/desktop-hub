@@ -287,6 +287,7 @@ export async function mount(el, ctx) {
     };
     const swRow = mcpSwitch(t("set.mcpCalendar"), "mcp.calendar", s.mcpCalendar);
     const webRow = mcpSwitch(t("set.mcpWeb"), "mcp.web", s.mcpWeb);
+    const imgRow = mcpSwitch(t("set.mcpImages"), "mcp.images", s.mcpImages);
 
     const list = document.createElement("div");
     list.className = "set-panels";
@@ -330,6 +331,8 @@ export async function mount(el, ctx) {
     root.append(section(t("set.claude"),
       swRow,
       webRow,
+      imgRow,
+      note(t("set.mcpImagesNote")),
       row(t("set.mcpPanels"), list, t("set.mcpPanelsNote")),
       row(t("set.mcpConfig"), pre, t("set.mcpConfigNote")),
       copy,

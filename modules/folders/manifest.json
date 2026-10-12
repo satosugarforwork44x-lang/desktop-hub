@@ -73,6 +73,10 @@
       "summary": "テキストファイルを読む"
     },
     {
+      "fn": "read_image",
+      "summary": "画像を縮小して読む（Claude に見せる用）"
+    },
+    {
       "fn": "write_text",
       "summary": "テキストファイルを書く"
     }

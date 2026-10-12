@@ -3,6 +3,14 @@
 版の付け方: `MAJOR.MINOR.PATCH`（host/version.py）。
 MAJOR = モジュールとの約束を壊す変更 / MINOR = 機能の追加 / PATCH = 不具合の修正。
 
+## 0.8.0 — 2026-10-12
+### 追加
+- Claude 連携: 画像を見る道具 `folders_read_image`（jpg / png / webp / gif / bmp / tif、rawpy があれば RAW）。長辺を縮めた JPEG で返す
+- 設定 → Claude との連携: 「画像も見せる」（`mcp.images`、既定は OFF）
+- モジュールへバイト列をそのまま送る口 `POST /upload/<module>/<fn>`（合言葉必須・256MB まで）。manifest の `hub.upload` に書いた関数だけが受け取る。画面からは `ctx.upload(fn, blob, args)`
+### 修正
+- バーの長さが「自動」のとき、状態の更新のたびに少しずつ伸び続けることがあった（今の幅を測って足していたため）。中身の本来の長さを測るようにした
+
 ## 0.7.5 — 2026-10-12
 ### 追加
 - タイルの表示に「フォルダ名」（アプリはアイコン、フォルダは名前）を追加（`bar.labels: "folders"`）

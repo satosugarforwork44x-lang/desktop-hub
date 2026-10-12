@@ -21,6 +21,7 @@ from .config import APP_ROOT
 from .registry import ModuleError
 
 UI_DIR = APP_ROOT / "ui"
+UPLOAD_MAX = 256 * 1024 * 1024   # 画面からモジュールへ送れるファイルの上限（/upload）
 mimetypes.add_type("text/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("text/javascript", ".mjs")
@@ -174,6 +175,34 @@ class HubServer:
                 ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
                 self._stream(target, ctype)
 
+            def _upload(self, path: str, query: dict):
+                """/upload/<module>/<fn>?引数 … 画面からモジュールへバイト列をそのまま送る（base64 にしないので軽い）。
+                合言葉が必要。manifest の hub.upload に書いた関数だけが受け取る。大きさは UPLOAD_MAX まで。"""
+                if self.headers.get("X-Hub-Token") != server.token:
+                    self._json(403, {"ok": False, "error": "トークンが違う"})
+                    return
+                length = self.headers.get("Content-Length")
+                if length is None or not length.isdigit():
+                    self._json(411, {"ok": False, "error": "大きさ（Content-Length）が無い"})
+                    return
+                if int(length) > UPLOAD_MAX:
+                    self.close_connection = True          # 本文は読まずに断る
+                    self._json(413, {"ok": False, "error": f"大きすぎる（{UPLOAD_MAX // 1048576}MB まで）"})
+                    return
+                parts = path.split("/")
+                if len(parts) != 4:
+                    self._json(404, {"ok": False, "error": "not found"})
+                    return
+                data = self.rfile.read(int(length))
+                args = {k: v[0] for k, v in query.items()}
+                try:
+                    self._json(200, {"ok": True, "data": server.registry.call_upload(parts[2], parts[3], data, args)})
+                except ModuleError as e:
+                    self._json(200, {"ok": False, "error": str(e)})
+                except Exception as e:
+                    traceback.print_exc()
+                    self._json(200, {"ok": False, "error": f"{type(e).__name__}: {e}"})
+
             def _stream(self, target: Path, ctype: str):
                 """ファイルを少しずつ送る。Range（途中から）にも答える → 動画のシーク・大きなファイルでもメモリを使わない。"""
                 size = target.stat().st_size
@@ -214,6 +243,9 @@ class HubServer:
 
             def do_POST(self):
                 path = urlparse(self.path).path
+                if path.startswith("/upload/"):
+                    self._upload(path, parse_qs(urlparse(self.path).query))
+                    return
                 if not path.startswith("/api/"):
                     self._json(404, {"ok": False, "error": "not found"})
                     return

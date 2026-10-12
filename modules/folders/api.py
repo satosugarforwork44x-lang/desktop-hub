@@ -353,3 +353,69 @@ def write_text(registry: str, rel: str, content: str, overwrite: bool = False) -
 def full_path(registry: str, rel: str = "") -> str:
     """画面から「開く」「エクスプローラーで表示」に渡す実パス。"""
     return str(_inside(registry, rel))
+
+
+# ---------- 画像を読む（Claude に見せるための縮小。書き込みはしない） ----------
+IMAGE_EXTS = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".webp", ".gif", ".bmp", ".tif", ".tiff"}
+RAW_EXTS = {".dng", ".cr2", ".cr3", ".nef", ".arw", ".raf", ".orf", ".rw2", ".pef", ".srw"}
+IMAGE_MAX_BYTES = 200 * 1024 * 1024    # これより大きい元ファイルは読まない
+
+
+def _open_raw(p: Path):
+    """RAW は中に入っている JPEG（プレビュー）を使う。無いものだけ簡易に現像する（Claude に見せるだけなので速さ優先）。"""
+    try:
+        import rawpy
+    except ImportError:
+        raise FolderError("RAW を読むには rawpy が必要です: py -m pip install rawpy") from None
+    import io
+    from PIL import Image
+    with rawpy.imread(str(p)) as raw:
+        try:
+            th = raw.extract_thumb()
+            if th.format == rawpy.ThumbFormat.JPEG:
+                return Image.open(io.BytesIO(th.data))
+            if th.format == rawpy.ThumbFormat.BITMAP:
+                return Image.fromarray(th.data)
+        except (rawpy.LibRawNoThumbnailError, rawpy.LibRawUnsupportedThumbnailError):
+            pass
+        return Image.fromarray(raw.postprocess(half_size=True, use_camera_wb=True))
+
+
+def read_image(registry: str, rel: str, max_px: int = 1568) -> dict:
+    """画像を、長辺が max_px（256〜2048）以下の JPEG にして返す（base64）。向き（EXIF）は直す。GIF は 1 枚目だけ。"""
+    p = _inside(registry, rel)
+    if not p.is_file():
+        raise FolderError("ファイルではない")
+    ext = p.suffix.lower()
+    if ext not in IMAGE_EXTS | RAW_EXTS:
+        raise FolderError(f"画像として読めるのは {', '.join(sorted(IMAGE_EXTS | RAW_EXTS))} だけ")
+    if p.stat().st_size > IMAGE_MAX_BYTES:
+        raise FolderError("画像が大きすぎる（200MB まで）")
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        raise FolderError("画像を読むには Pillow が必要です: py -m pip install pillow") from None
+    import base64
+    import io
+    max_px = max(256, min(2048, int(max_px)))
+    im = _open_raw(p) if ext in RAW_EXTS else Image.open(p)   # 巨大画像の保護（DecompressionBomb）はそのまま
+    with im:
+        fmt = "RAW" if ext in RAW_EXTS else (im.format or ext[1:].upper())
+        if getattr(im, "n_frames", 1) > 1:
+            im.seek(0)                                          # 動く GIF・複数ページは 1 枚目
+        im = ImageOps.exif_transpose(im)
+        size = im.size
+        if im.mode not in ("RGB", "L"):
+            if "A" in im.mode or im.mode == "P":                # 透明な部分は白にする
+                bg = Image.new("RGB", im.size, (255, 255, 255))
+                im = im.convert("RGBA")
+                bg.paste(im, mask=im.getchannel("A"))
+                im = bg
+            else:
+                im = im.convert("RGB")
+        im.thumbnail((max_px, max_px), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.convert("RGB").save(buf, "JPEG", quality=85, optimize=True)
+    return {"rel": _rel(registry, p), "format": fmt, "width": size[0], "height": size[1],
+            "sentWidth": im.size[0], "sentHeight": im.size[1], "mime": "image/jpeg",
+            "data": base64.b64encode(buf.getvalue()).decode("ascii")}

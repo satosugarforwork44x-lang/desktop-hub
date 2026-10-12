@@ -747,6 +747,7 @@ class Host:
             "foldersRootResolved": str(Path(str(get_in(c, ("modules", "folders", "root"), "~/Hub"))).expanduser()),
             "mcpCalendar": bool(get_in(c, ("mcp", "calendar"), True)),
             "mcpWeb": bool(get_in(c, ("mcp", "web"), True)),
+            "mcpImages": bool(get_in(c, ("mcp", "images"), False)),
             "barTiles": dict(get_in(c, ("bar", "tiles"), {}) or {}),
             "barFolders": get_in(c, ("bar", "folders"), "auto"),
             "mcpPanels": dict(get_in(c, ("mcp", "panels"), {}) or {}),

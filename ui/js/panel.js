@@ -1,6 +1,6 @@
 // panel.js — パネル窓の共通部分（見出し・畳む・閉じる・大きさ変更）。
 // 中身はモジュールの ui/panel.js（L2）か、manifest の actions から作る汎用画面（L1）。
-import { api, call, host, isNative, onNativeDrop, PARAMS, toast, contextMenu } from "./hub.js";
+import { api, call, upload, host, isNative, onNativeDrop, PARAMS, toast, contextMenu } from "./hub.js";
 import { icons } from "./icons.js";
 import "./theme.js";
 import { t, translateDom, localize } from "./i18n.js";
@@ -52,6 +52,7 @@ function makeContext(mod) {
     module: mod,
     instance,
     call: (fn, args) => call(moduleId, fn, args),
+    upload: (fn, blob, args) => upload(moduleId, fn, blob, args),   // ファイルをそのまま送る（hub.upload の関数だけ）
     host,
     toast,
     contextMenu,

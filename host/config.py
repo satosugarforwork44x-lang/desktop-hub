@@ -31,8 +31,9 @@ DEFAULTS: dict = {
     # フォルダ窓の置き場所。既定はユーザーフォルダの下の Hub（初回起動時に自動で作る）
     "modules": {"folders": {"root": "~/Hub"}},
     # Claude（MCP）から使える範囲。panels はフォルダ窓ごとに hidden（見せない）/ read / write。
-    # 書いていないフォルダ窓は hidden（見せない）。calendar=false なら予定も見せない。web=false なら Web ショートカットの一覧も見せない
-    "mcp": {"calendar": True, "web": True, "panels": {}},
+    # 書いていないフォルダ窓は hidden（見せない）。calendar=false なら予定も見せない。web=false なら Web ショートカットの一覧も見せない。
+    # images=true のときだけ、見せているフォルダ窓の画像を Claude が見られる（既定は見せない）
+    "mcp": {"calendar": True, "web": True, "images": False, "panels": {}},
 }
 
 USER_CONFIG = user_home() / "hub.config.json"
@@ -40,7 +41,7 @@ LEGACY_CONFIG = APP_ROOT / "hub.config.json"   # 0.4 までの置き場所（ア
 # 設定画面から変えてよい項目（これ以外は書き換えない）
 EDITABLE = {
     ("lang",): str, ("appearance", "mode"): str, ("appearance", "accent"): str, ("bar", "dock"): str, ("bar", "labels"): str, ("bar", "intro"): bool, ("bar", "tiles"): dict, ("bar", "folders"): str, ("windows", "corners"): str,
-    ("modules", "folders", "root"): str, ("mcp", "calendar"): bool, ("mcp", "web"): bool, ("mcp", "panels"): dict,
+    ("modules", "folders", "root"): str, ("mcp", "calendar"): bool, ("mcp", "web"): bool, ("mcp", "images"): bool, ("mcp", "panels"): dict,
 }
 MCP_ACCESS = {"hidden", "read", "write"}
 CHOICES = {

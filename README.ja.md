@@ -118,10 +118,11 @@ Claude Desktop（や Cowork などの Claude）に、Hub の予定とフォル�
 - **削除はどの範囲でもできません。** フォルダ窓の外のファイルにも触れません。
 - 予定は「予定を Claude に見せる」で ON / OFF できます（既定は ON）。
 - Web ショートカットの一覧（名前と URL だけ）も同じように ON / OFF できます（既定は ON）。Hub が Claude のためにページを取りに行くことはありません。
+- **「画像も見せる」**（既定は OFF）: ON にすると、「読む」以上のフォルダ窓の画像（jpg / png / webp / gif / bmp / tif、`rawpy` を入れればカメラの RAW も）を Claude が見られます。長辺 1568px（最大 2048px）に縮めた JPEG が **Claude に送られます**。
 
 > 💡 おすすめの使い方: `Inbox`（読む）に処理してほしいファイルを入れ、`Outbox`（読み書き）に成果物を書いてもらう。
 
-> ⚠️ Hub 自体は PC の中だけで動きますが、Claude が道具を使うと、**予定の件名・ファイル名・読ませたテキストの中身は Claude に送られます**。
+> ⚠️ Hub 自体は PC の中だけで動きますが、Claude が道具を使うと、**予定の件名・ファイル名・読ませたテキストの中身（「画像も見せる」が ON なら画像も）は Claude に送られます**。
 > Hub 本体を起動していなくても使えます。
 
 ## アップデートのしかた
@@ -158,6 +159,7 @@ Claude Desktop（や Cowork などの Claude）に、Hub の予定とフォル�
 | `mcp.panels` | Claude に見せるフォルダ窓（例: `{"Inbox": "read", "Outbox": "write"}`） | `{}`（見せない） |
 | `mcp.calendar` | 予定を Claude に見せるか | `true` |
 | `mcp.web` | Web ショートカットの一覧を Claude に見せるか | `true` |
+| `mcp.images` | 見せているフォルダ窓の画像を Claude に見せるか | `false` |
 | `modules.media.ffmpeg` | 自分で入れた `ffmpeg.exe` の場所（変換するときだけ） | 自動で探す |
 
 ## 構成
@@ -213,7 +215,8 @@ py hub.py --dev        :: 表示された URL をブラウザで開くと画面�
 | Send2Trash | ごみ箱へ送る | BSD-3-Clause |
 | PDF.js | PDF ビューア（`modules/pdf/ui/vendor/pdfjs` に同梱） | Apache-2.0 |
 | PyMuPDF | PDF の画像化・テキスト化 | **AGPL-3.0**（同梱せず、pip で別途インストール） |
-| Pillow | 画像の保存 | MIT-CMU |
+| Pillow | 画像の保存・Claude に見せる画像 | MIT-CMU |
+| rawpy（任意） | Claude に RAW を見せる | MIT（中の LibRaw は LGPL-2.1 / CDDL-1.0）。同梱しない（pip で入れる） |
 | icalendar / python-dateutil | 予定の読み込み | BSD-2-Clause / Apache-2.0・BSD |
 | mcp | Claude 連携 | MIT |
 | psutil | PC モニター | BSD-3-Clause |
