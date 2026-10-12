@@ -220,6 +220,18 @@ body.collapsed .bar.vertical {
 .bar.icons-only .tile-label { display: none; }
 .bar.icons-only .tile.open::after { right: 3px; top: 3px; }
 .vertical .tile, .vertical.icons-only .tile { width: 40px; height: 40px; border-radius: var(--r); }
+.tile-short { display: none; }
+/* 「フォルダだけ名前」: アプリのタイルはアイコンだけ、フォルダは名前つき */
+.bar.labels-folders .tile:not(.is-folder) { width: 34px; height: 34px; padding: 0; justify-content: center; }
+.bar.labels-folders .tile:not(.is-folder) .tile-label { display: none; }
+.bar.labels-folders .tile:not(.is-folder).open::after { right: 3px; top: 3px; }
+/* 左右に置いたとき: フォルダはアイコンの下に先頭 3 文字（横書き） */
+.vertical.short-folders .tile.is-folder { height: auto; min-height: 48px; flex-direction: column; gap: 3px; padding: 7px 0 6px; }
+.vertical.short-folders .tile.is-folder .tile-short {
+  display: block; max-width: 40px; overflow: hidden; white-space: nowrap; text-align: center;
+  font-size: 10px; line-height: 1.1; letter-spacing: 0; color: var(--muted);
+}
+.vertical.short-folders .tile.is-folder:hover .tile-short, .vertical.short-folders .tile.is-folder.open .tile-short { color: var(--text); }
 .bar.tight .chip-text, .bar.tight .clock .date { display: none; }
 .bar.tight .chip { padding: 0 10px; }
 .bar.tighter .chip-rel { display: none; }

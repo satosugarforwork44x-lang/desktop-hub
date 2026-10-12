@@ -206,7 +206,7 @@ export async function mount(el, ctx) {
       row(t("set.dock"), segmented("bar.dock", [
         ["top", t("set.top"), icons.dockTop], ["bottom", t("set.bottom"), icons.dockBottom],
         ["left", t("set.left"), icons.dockLeft], ["right", t("set.right"), icons.dockRight]], s.dock), t("set.dockNote")),
-      row(t("set.labels"), segmented("bar.labels", [["auto", t("set.auto")], ["icons", t("set.iconsOnly")], ["full", t("set.full")]], s.labels),
+      row(t("set.labels"), segmented("bar.labels", [["auto", t("set.auto")], ["icons", t("set.iconsOnly")], ["folders", t("set.foldersOnly")], ["full", t("set.full")]], s.labels),
         t("set.labelsNote")),
       row(t("set.corners"), segmented("windows.corners", [["round", t("set.round")], ["small", t("set.small")], ["square", t("set.square")]], s.corners)),
       switchRow(t("set.intro"), "bar.intro", s.intro),

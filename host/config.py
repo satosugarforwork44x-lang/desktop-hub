@@ -16,7 +16,7 @@ DEFAULTS: dict = {
     # 表示言語: auto（OSの言語に合わせる）/ ja / en
     "lang": "auto",
     # dock: top / bottom / left / right。length はバーの長さ(px)。
-    # labels: auto（入りきらなければアイコンだけ）/ icons（常にアイコンだけ）/ full（常に文字も出す）
+    # labels: auto（入りきらなければアイコンだけ）/ icons（常にアイコンだけ）/ folders（フォルダだけ名前）/ full（常に文字も出す）
     # length: "auto"（中身に合わせて伸び縮み。画面の幅まで）または数値（px）
     # tiles: タイルの並び（order）と隠すもの（hidden）。値はタイルの id（"web" や "folders:Inbox"）
     # folders: フォルダ窓の出し方。auto（よく使うものだけ並べ、隠したものは「フォルダ」タイルから）/ each（すべて並べる）/ group（「フォルダ」タイル 1 つにまとめる）
@@ -46,7 +46,7 @@ MCP_ACCESS = {"hidden", "read", "write"}
 CHOICES = {
     ("lang",): {"auto", "ja", "en"}, ("appearance", "mode"): {"auto", "dark", "light"},
     ("appearance", "accent"): {"aurora", "ocean", "ember", "graphite"}, ("bar", "dock"): {"top", "bottom", "left", "right"},
-    ("bar", "labels"): {"auto", "icons", "full"}, ("windows", "corners"): {"round", "small", "square"},
+    ("bar", "labels"): {"auto", "icons", "folders", "full"}, ("windows", "corners"): {"round", "small", "square"},
     ("bar", "folders"): {"auto", "each", "group"},
 }
 

@@ -102,14 +102,15 @@ async function openPanel(pid) {
   }
 }
 
-function tile(pid, label, icon, title) {
+function tile(pid, label, icon, title, folder = false) {
   const b = document.createElement("button");
-  b.className = "tile";
+  b.className = folder ? "tile is-folder" : "tile";
   b.dataset.pid = pid;
   b.title = title || label;
   b.setAttribute("aria-label", label);
-  b.innerHTML = `${icon}<span class="tile-label"></span>`;
+  b.innerHTML = `${icon}<span class="tile-label"></span><span class="tile-short" aria-hidden="true"></span>`;
   b.querySelector(".tile-label").textContent = label;
+  b.querySelector(".tile-short").textContent = [...label].slice(0, 3).join("");   // 左右に置いたときの短い名前
   b.addEventListener("click", () => openPanel(pid));
   return b;
 }
@@ -142,7 +143,7 @@ async function render() {
   const showGroup = folderItems.length > 0 && (mode === "group" || (mode === "auto" && folderItems.some((x) => x.hidden)));
   const lastFolder = arranged.lastIndexOf(folderItems[folderItems.length - 1]);
   arranged.forEach((x, i) => {
-    if (!x.hidden && !(x.folder && mode === "group")) tiles.append(tile(x.pid, x.label, x.icon, x.title));
+    if (!x.hidden && !(x.folder && mode === "group")) tiles.append(tile(x.pid, x.label, x.icon, x.title, x.folder));
     if (i === lastFolder && showGroup) {
       const g = tile("folders", t("bar.folders"), icons.folders, t("bar.foldersTip"));
       g.classList.add("tile-folders");
@@ -340,10 +341,23 @@ function chime() {
 // 段階1: タイルの文字を隠してアイコンだけ → 段階2: 予定の件名と日付を隠す → 段階3: 「あと○分」も隠す。文字はツールチップで読める
 function fit() {
   const bar = $("#bar");
-  bar.classList.remove("icons-only", "tight", "tighter", "overflow");
+  bar.classList.remove("icons-only", "tight", "tighter", "overflow", "labels-folders", "short-folders");
   const over = () => (vertical ? $("#tiles").scrollHeight > $("#tiles").clientHeight + 1 : $("#tiles").scrollWidth > $("#tiles").clientWidth + 1);
-  if (vertical || labelsMode === "icons") { bar.classList.add("icons-only"); if (over()) bar.classList.add("overflow"); return; }
+  // 左右に置いたとき: アイコンだけ。フォルダは先頭 3 文字を横書きで添える（「アイコンだけ」の設定なら添えない）
+  if (vertical) {
+    bar.classList.add("icons-only");
+    if (labelsMode !== "icons") bar.classList.add("short-folders");
+    if (over()) bar.classList.add("overflow");
+    return;
+  }
+  if (labelsMode === "icons") { bar.classList.add("icons-only"); if (over()) bar.classList.add("overflow"); return; }
   if (labelsMode === "full") { if (over()) bar.classList.add("overflow"); return; }
+  if (labelsMode === "folders") {                 // アプリはアイコン、フォルダは名前
+    bar.classList.add("labels-folders");
+    if (over()) bar.classList.add("icons-only");
+    if (over()) bar.classList.add("overflow");
+    return;
+  }
   if (over()) bar.classList.add("icons-only");
   if (over()) bar.classList.add("tight");
   if (over()) bar.classList.add("tighter");

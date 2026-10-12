@@ -62,7 +62,7 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
 - Drag the clock to slide the bar along the edge (the position is remembered).
 - The bar grows to fit its tiles (up to the screen width). Reorder or hide tiles in **Settings → Bar tiles** (drag the ⋮⋮ handle; the eye shows/hides).
 - Folder panels on the bar (Settings → Bar tiles): **Favorites only** (default — hidden folders open from the Folders tile), **Show all**, or **One tile**.
-- When space runs out, tiles switch to icons only (hover for names).
+- When space runs out, tiles switch to icons only (hover for names). Settings → Tiles → "Folder names" keeps apps as icons and shows folder names; on a left/right bar folders show their first 3 letters.
 - **Hub picks up where you left off**: open panels, their position and size, collapsed state, bar position and 📌 are restored on next launch.
   Panels left on a disconnected monitor are moved back into view.
 
@@ -152,7 +152,7 @@ Changes made in Settings are saved to `%LOCALAPPDATA%\Hub\hub.config.json` (crea
 | `appearance.mode` | `dark` / `light` / `auto` | `dark` |
 | `appearance.accent` | `aurora` / `ocean` / `ember` / `graphite` | `aurora` |
 | `bar.dock` | `top` / `bottom` / `left` / `right` | `top` |
-| `bar.labels` | `auto` / `icons` / `full` | `auto` |
+| `bar.labels` | `auto` / `icons` / `folders` (folder names only) / `full` | `auto` |
 | `bar.length` | `"auto"` (fit the tiles) or a fixed length in px | `"auto"` |
 | `bar.tiles` | `{"order": [...], "hidden": [...]}` tile ids such as `"web"`, `"folders:Inbox"` (set in Settings) | `{}` |
 | `bar.intro` | startup animation | `true` |
