@@ -344,7 +344,8 @@ export async function mount(el, ctx) {
     cfg.textContent = s.configPath;
     cfg.title = s.configPath;
     const ver = document.createElement("code");
-    ver.textContent = `Hub ${s.version}`;
+    ver.textContent = s.pythonVersion ? `Hub ${s.version} · Python ${s.pythonVersion}` : `Hub ${s.version}`;
+    ver.title = s.python || "";              // どの Python で動いているか（道具を入れる先）
     const home = document.createElement("div");
     home.className = "set-path";
     const hc = document.createElement("code");

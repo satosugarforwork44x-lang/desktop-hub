@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import json
 import os
+import functools
+import platform
+import re
 import subprocess
 import sys
 import threading
@@ -441,6 +444,27 @@ class PywebviewBackend:
             self._apply_corners(win, "small" if wid == "bar" and style != "square" else style)
 
 
+
+@functools.lru_cache(maxsize=1)
+def preferred_python() -> Path:
+    """Hub を動かす Python（python.exe）。start_hub.bat の `set HUB_PY=3.14` と同じ版を使う。
+    ショートカットと Claude 連携の設定がこれを指すので、どこから開いても同じ Python で動く。
+    その版が入っていない・Windows でないときは、今動いている Python。"""
+    here = Path(sys.executable.replace("pythonw.exe", "python.exe"))
+    bat = Path(__file__).resolve().parent.parent / "start_hub.bat"
+    if os.name != "nt" or not bat.exists():
+        return here
+    m = re.search(r"^set HUB_PY=([\d.]+)\s*$", bat.read_text(encoding="utf-8", errors="replace"), re.M)
+    if not m:
+        return here
+    try:
+        r = subprocess.run(["py", f"-{m.group(1)}", "-c", "import sys; print(sys.executable)"], capture_output=True,
+                           text=True, timeout=15, creationflags=0x08000000)  # CREATE_NO_WINDOW
+    except (OSError, subprocess.SubprocessError):
+        return here
+    exe = Path(r.stdout.strip()) if r.returncode == 0 else None
+    return exe if exe and exe.exists() else here
+
 class Host:
     """窓の開閉・配置の記憶・OS操作をまとめる。HTTP API（server.py）から呼ばれる。"""
 
@@ -756,7 +780,8 @@ class Host:
             "version": VERSION,
             "userHome": str(USER_CONFIG.parent),
             "appRoot": str(Path(__file__).resolve().parent.parent),
-            "python": sys.executable.replace("pythonw.exe", "python.exe"),
+            "python": str(preferred_python()),                 # Claude 連携の設定に貼る Python（Hub と同じ版）
+            "pythonVersion": platform.python_version(),
             "native": not isinstance(self.backend, NullBackend),
         }
 
@@ -814,10 +839,11 @@ class Host:
 
     @staticmethod
     def _write_shortcut(lnk: Path) -> None:
-        """今の Hub（この場所の hub.py）を、黒い画面なしで開くショートカットを作る。"""
+        """今の Hub（この場所の hub.py）を、黒い画面なしで開くショートカットを作る。Python は preferred_python()。"""
         root = Path(__file__).resolve().parent.parent
-        pyw = Path(sys.executable).with_name("pythonw.exe")
-        target = pyw if pyw.exists() else Path(sys.executable)
+        exe = preferred_python()                       # start_hub.bat と同じ版（今 3.15 で動いていても 3.14 を指す）
+        pyw = exe.with_name("pythonw.exe")
+        target = pyw if pyw.exists() else exe
         ps = (
             "$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:HUB_LNK);"
             "$s.TargetPath=$env:HUB_TARGET;$s.Arguments='\"'+$env:HUB_SCRIPT+'\"';"

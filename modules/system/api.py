@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 
@@ -26,6 +27,12 @@ class SystemError_(Exception):
     pass
 
 
+
+def _pip(pkg: str) -> str:
+    """入れ方の案内。`py` だけだと最新の Python（3.15 など）に入ってしまうので、今 Hub を動かしている Python を名指しする。"""
+    exe = sys.executable.replace("pythonw.exe", "python.exe")
+    return f'"{exe}" -m pip install --user {pkg}'
+
 def setup(ctx):
     global _ctx
     _ctx = ctx
@@ -36,7 +43,7 @@ def _ps():
         import psutil
         return psutil
     except ImportError:
-        raise SystemError_("psutil が入っていません（py -m pip install --user psutil）") from None
+        raise SystemError_(f"psutil が入っていません（{_pip('psutil')}）") from None
 
 
 def prefs() -> dict:

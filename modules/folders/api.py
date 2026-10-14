@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -20,6 +21,12 @@ HISTORY_MAX = 30
 class FolderError(Exception):
     pass
 
+
+
+def _pip(pkg: str) -> str:
+    """入れ方の案内。`py` だけだと最新の Python（3.15 など）に入ってしまうので、今 Hub を動かしている Python を名指しする。"""
+    exe = sys.executable.replace("pythonw.exe", "python.exe")
+    return f'"{exe}" -m pip install --user {pkg}'
 
 def setup(ctx):
     global _ctx
@@ -366,7 +373,7 @@ def _open_raw(p: Path):
     try:
         import rawpy
     except ImportError:
-        raise FolderError("RAW を読むには rawpy が必要です: py -m pip install rawpy") from None
+        raise FolderError(f"RAW を読むには rawpy が必要です: {_pip('rawpy')}") from None
     import io
     from PIL import Image
     with rawpy.imread(str(p)) as raw:
@@ -394,7 +401,7 @@ def read_image(registry: str, rel: str, max_px: int = 1568) -> dict:
     try:
         from PIL import Image, ImageOps
     except ImportError:
-        raise FolderError("画像を読むには Pillow が必要です: py -m pip install pillow") from None
+        raise FolderError(f"画像を読むには Pillow が必要です: {_pip('pillow')}") from None
     import base64
     import io
     max_px = max(256, min(2048, int(max_px)))

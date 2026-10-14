@@ -29,16 +29,17 @@ Claude can use it too, through MCP, within the limits you set.
 | **PC Monitor** | CPU, memory, NVIDIA GPU (usage, VRAM, temperature), disk, network traffic, ping with jitter and loss, and which apps are heavy. CPU & memory can go on the bar |
 | **Calendar** | Reads Google / Outlook.com / iCloud calendars via an iCal URL and shows `next 14:00 Standup · in 12m` on the bar (read-only) |
 | **Claude integration (MCP)** | Ask Claude things like "Summarize the files in Inbox and save a report to Outbox" or "What's on tomorrow?". You choose which folder panels it can see |
-| **Themes** | Dark / Light × 4 gradients (Aurora, Ocean, Ember, Graphite), or follow Windows. Menus and dropdowns follow the theme too |
+| **Themes** | Dark / Light × 8 gradients (Aurora, Ocean, Ember, Graphite, Forest, Sakura, Gold, Indigo), or follow Windows. Menus and dropdowns follow the theme too |
 | **Settings** | Language, theme, bar position (top / bottom / left / right), corners, folder location — all from the UI |
 | **English & Japanese** | Follows your Windows language, or pick one in Settings |
 
 ## Getting started
 
-1. Install **Python 3.10+** from [python.org](https://www.python.org/downloads/) (check "Add python.exe to PATH").
+1. Install **Python 3.14** (3.10+ works) from [python.org](https://www.python.org/downloads/) (check "Add python.exe to PATH").
+   Some optional tools used by extensions are not yet available for 3.15, so `start_hub.bat` uses **3.14** when it is installed (`set HUB_PY=3.14` at the top).
 2. Put this `hub` folder anywhere, open a Command Prompt inside it, and run (no admin rights needed):
    ```bat
-   py -m pip install --user -r requirements.txt
+   py -3.14 -m pip install --user -r requirements.txt
    ```
 3. Double-click `start_hub.bat` **once**, then turn on Settings (⚙) → Startup → "Add Hub to the Start menu" so you can open Hub like any other app.
 
@@ -50,6 +51,7 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
 |---|---|
 | Start | `start_hub.bat` (no console window) |
 | Troubleshoot | Start with `start_hub_debug.bat` to see errors. They're also logged to `%LOCALAPPDATA%\Hub\data\hub.log` |
+| "Not installed" errors | Install packages into **the Python that runs Hub** (shown in Settings → "About this Hub"). Plain `py` targets the newest Python (e.g. 3.15), so use `py -3.14 -m pip install …`. If you switch Python versions, paste the Claude integration config again (Settings → Copy) |
 | Quit | ⏻ at the end of the bar |
 | Start with Windows | Settings (⚙) → Startup → "Open Hub when Windows starts" |
 | App icon | Settings (⚙) → Startup → "Add Hub to the Start menu" / "Put a Hub icon on the desktop". From the Start menu you can also pin Hub to the taskbar. No need to open the `.bat` again |
@@ -202,8 +204,8 @@ Create a folder with a `manifest.json` in `%LOCALAPPDATA%\Hub\modules\` and a ti
 ## Development
 
 ```bat
-py -m unittest discover -s tests -v
-py hub.py --dev        :: open the printed URL in a browser to preview the UI
+py -3.14 -m unittest discover -s tests -v
+py -3.14 hub.py --dev        :: open the printed URL in a browser to preview the UI
 ```
 
 ## License

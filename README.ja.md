@@ -27,15 +27,16 @@
 | **PC モニター** | CPU・メモリ・NVIDIA の GPU（使用率・VRAM・温度）・ディスク・通信量・Ping（ゆらぎ・損失）と、重いアプリ。CPU とメモリはバーにも出せる |
 | **予定** | Google / Outlook.com / iCloud のカレンダーを iCal URL で読み取り、バーに `next 14:00 定例 · あと12分` と表示（読み取り専用） |
 | **Claude 連携（MCP）** | Claude に「Inbox の資料をまとめて Outbox に保存して」「明日の予定は？」などを頼める。見せるフォルダ窓は自分で選ぶ |
-| **テーマ** | ダーク / ライト × 4 種のグラデーション（Aurora・Ocean・Ember・Graphite）、Windows に合わせることも可。メニューやプルダウンもテーマの色に合わせる |
+| **テーマ** | ダーク / ライト × 8 種のグラデーション（Aurora・Ocean・Ember・Graphite・Forest・Sakura・Gold・Indigo）、Windows に合わせることも可。メニューやプルダウンもテーマの色に合わせる |
 | **設定** | 表示言語・テーマ・バーの位置（上下左右）・角丸・フォルダの場所を画面から変更 |
 
 ## はじめかた（3 ステップ）
 
-1. **Python 3.10 以上**を入れる（[python.org](https://www.python.org/downloads/) から。インストール時に「Add python.exe to PATH」にチェック）。
+1. **Python 3.14** を入れる（3.10 以上なら動きます。[python.org](https://www.python.org/downloads/) から。インストール時に「Add python.exe to PATH」にチェック）。
+   拡張で使う道具には 3.15 用がまだ無いものがあるため、`start_hub.bat` は 3.14 が入っていれば 3.14 で起動します（先頭の `set HUB_PY=3.14`）。
 2. このフォルダ（`hub`）を好きな場所に置き、フォルダの中でコマンドプロンプトを開いて次を実行する（管理者権限は不要）。
    ```bat
-   py -m pip install --user -r requirements.txt
+   py -3.14 -m pip install --user -r requirements.txt
    ```
 3. `start_hub.bat` を**最初の 1 回だけ**ダブルクリックし、設定（⚙）→ 起動 →「スタートメニューに Hub を置く」を ON にします。以後はほかのアプリと同じように開けます。
 
@@ -47,6 +48,7 @@
 |---|---|
 | 起動 | `start_hub.bat`（黒い画面は出ません） |
 | うまく動かないとき | `start_hub_debug.bat` で起動するとエラーが表示されます。`%LOCALAPPDATA%\Hub\data\hub.log` にも記録されます |
+| 「入っていない」と言われる | 道具は **Hub を動かしている Python** に入れます（設定 →「このHubについて」に版が出ます）。`py` だけで入れると最新の Python（3.15 など）に入ってしまうので `py -3.14 -m pip install …` のように版を付けます。Python の版を変えたら、Claude 連携の設定（`claude_desktop_config.json`）も設定画面の「コピー」から貼り直します |
 | 終了 | バーの右端の ⏻ |
 | Windows 起動時に自動で立ち上げる | 設定（⚙）→ 起動 →「Windows の起動時に Hub を開く」を ON |
 | アプリのアイコンにする | 設定（⚙）→ 起動 →「スタートメニューに Hub を置く」「デスクトップに Hub のアイコンを置く」。スタートメニューからタスクバーにピン留めもできます。`.bat` を開く必要はなくなります |
@@ -198,8 +200,8 @@ hub/
 ## 開発
 
 ```bat
-py -m unittest discover -s tests -v
-py hub.py --dev        :: 表示された URL をブラウザで開くと画面だけ確認できる
+py -3.14 -m unittest discover -s tests -v
+py -3.14 hub.py --dev        :: 表示された URL をブラウザで開くと画面だけ確認できる
 ```
 
 ## ライセンス

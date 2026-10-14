@@ -1064,3 +1064,17 @@ class AccentListTest(unittest.TestCase):
         for a in names:
             self.assertIn(f".sw-{a} .swatch-chip", css, a)
             self.assertEqual(i18n.count(f'"set.accent.{a}"'), 2, a)   # 日本語と英語
+
+
+class PythonVersionTest(unittest.TestCase):
+    """起動用の .bat 2 つは同じ Python の版を使う（片方だけ変えると「動く・動かない」が起動方法で変わる）。"""
+
+    def test_bats_use_same_version(self):
+        import re
+        vers = [re.search(r"^set HUB_PY=([\d.]+)\s*$", (ROOT / b).read_text(encoding="utf-8"), re.M).group(1)
+                for b in ("start_hub.bat", "start_hub_debug.bat")]
+        self.assertEqual(vers[0], vers[1])
+
+    def test_preferred_python_falls_back_to_current(self):
+        from host.app import preferred_python
+        self.assertTrue(preferred_python().exists())

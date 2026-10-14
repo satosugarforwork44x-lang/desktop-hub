@@ -3,6 +3,13 @@
 版の付け方: `MAJOR.MINOR.PATCH`（host/version.py）。
 MAJOR = モジュールとの約束を壊す変更 / MINOR = 機能の追加 / PATCH = 不具合の修正。
 
+## 0.9.1 — 2026-10-15
+### 変更
+- `start_hub.bat` / `start_hub_debug.bat` は Python 3.14 で起動する（`set HUB_PY=3.14`。入っていなければ今までどおり最新版）。3.15 用がまだ無い道具（faster-whisper など）があるため
+- 設定 → 情報 に、Hub を動かしている Python の版を表示（マウスを乗せると場所）。デバッグ起動の画面にも表示
+- 「○○ が入っていません」の案内を、Hub を動かしている Python を名指しした `pip` の形に（`py` だけだと別の版に入ってしまう）
+- README: Python 3.14 を勧める・`py -3.14` の形に。テーマの色数を 8 に直した
+
 ## 0.9.0 — 2026-10-14
 ### 追加
 - 色（アクセント）を 4 つ追加して 8 色に: Forest（森）/ Sakura（桜）/ Gold（金）/ Indigo（藍）。拡張は `--signal` `--c1-rgb`〜`--c3-rgb` `--tint` などの変数を使っているので、そのまま新しい色になる

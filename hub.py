@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import sys
 import threading
 from pathlib import Path
@@ -89,6 +90,7 @@ def main() -> int:
         server.start()
         for e in registry.errors + [f"{m.id}: {err}" for m in registry.modules.values() for err in m.errors]:
             print("⚠", e)
+        print(f"Python: {platform.python_version()}  ({sys.executable})")
         print(f"設定: {config['_source']}")
         print(f"バー:   {host.url('bar.html', dock=config['bar'].get('dock', 'top'))}")
         if args.open_file:
