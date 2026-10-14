@@ -106,17 +106,17 @@ export async function mount(el, ctx) {
     const r = rowOf(e.target);
     if (!r) { selected.clear(); render(); return; }
     const rel = r.dataset.rel;
+    // ダブルクリック: 1 回目のクリックで行を描き直すため、dblclick イベントは行に届かない（親の .tree に届く）。
+    // クリックの回数（e.detail）で見分ける
+    if (e.detail === 2 && !e.ctrlKey && !e.target.closest(".chev")) {
+      r.dataset.dir ? toggle(rel) : openItem(rel);
+      return;
+    }
     if (e.ctrlKey) selected.has(rel) ? selected.delete(rel) : selected.add(rel);
     else selected = new Set([rel]);
     if (r.dataset.dir && e.target.closest(".chev")) toggle(rel);
     else render();
     tree.focus();
-  });
-  tree.addEventListener("dblclick", (e) => {
-    const r = rowOf(e.target);
-    if (!r) return;
-    if (r.dataset.dir) toggle(r.dataset.rel);
-    else openItem(r.dataset.rel);
   });
   tree.addEventListener("keydown", (e) => {
     const sel = [...selected];
