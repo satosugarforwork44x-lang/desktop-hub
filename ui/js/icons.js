@@ -64,6 +64,13 @@ export const icons = {
   mesh: svg('<path d="m12 3 7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 3v6.5M19.8 7.5 15 12.2M19.8 16.5 15 12.2M12 21v-6.5M4.2 16.5 9 12.2M4.2 7.5 9 12.2"/><path d="m12 9.5 3 2.7-3 2.3-3-2.3z"/>'),
   // 鍵盤（サウンドスケッチ）
   pianoKeys: svg('<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9 13.5v6M15 13.5v6"/><rect x="7.2" y="4.5" width="3.6" height="9" rx=".9" fill="currentColor" stroke="none"/><rect x="13.2" y="4.5" width="3.6" height="9" rx=".9" fill="currentColor" stroke="none"/>'),
+  // 録音（拡張「ボイスメモ」用。使わなければそのまま）
+  mic: svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21M8.5 21h7"/>'),
+  micOff: svg('<path d="M15 9.5V6a3 3 0 0 0-5.6-1.5M9 9v2a3 3 0 0 0 4.9 2.3"/><path d="M5.5 11a6.5 6.5 0 0 0 10.8 4.9M18.5 11a6.4 6.4 0 0 1-.4 2.2"/><path d="M12 17.5V21M8.5 21h7M4 4l16 16"/>'),
+  record: svg('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/>'),
+  waveform: svg('<path d="M3 12h2M7 8v8M11 4v16M15 7v10M19 10v4"/>'),
+  transcript: svg('<path d="M6 3.5h8l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20z"/><path d="M14 3.5V8h4"/><path d="M9 12.5h6M9 15.5h6M9 18h3.5"/>'),
+  voiceMemo: svg('<rect x="3.5" y="5" width="17" height="14" rx="3"/><path d="M8 10v4M11 8.5v7M14 10.5v3M17 9.5v5"/>'),
   globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'),
   gauge: svg('<path d="M4.5 18a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4-4.5"/><circle cx="12" cy="13.5" r="1.3" fill="currentColor"/>'),
   window: svg('<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 8.5h18"/>'),
