@@ -1078,3 +1078,35 @@ class PythonVersionTest(unittest.TestCase):
     def test_preferred_python_falls_back_to_current(self):
         from host.app import preferred_python
         self.assertTrue(preferred_python().exists())
+
+
+class MarkdownViewerTest(HubTestBase):
+    """ビューアで Markdown を読む（0.9.3）。表示は画面の markdown.js、ここでは読み込みと関連付けの範囲を見る。"""
+
+    def test_read_markdown_utf8_and_cp932(self):
+        md = self.reg_root / "WIP" / "note.md"
+        md.write_text("# 見出し\n\n- [x] 済\n", encoding="utf-8")
+        r = self.registry.call("pdf", "open_doc", {"path": str(md)})
+        self.assertEqual(r["kind"], "md")
+        got = self.registry.call("pdf", "read_text", {"key": r["key"]})
+        self.assertIn("# 見出し", got["text"])
+        self.assertEqual(self.registry.call("pdf", "mtime", {"key": r["key"]}), got["mtime"])
+        old = self.reg_root / "WIP" / "old.md"
+        old.write_bytes("古いメモ".encode("cp932"))              # メモ帳で保存された古いファイル
+        k = self.registry.call("pdf", "open_doc", {"path": str(old)})["key"]
+        self.assertEqual(self.registry.call("pdf", "read_text", {"key": k})["text"], "古いメモ")
+
+    def test_markdown_is_opened_by_viewer(self):
+        import json as _j
+        m = _j.loads((ROOT / "modules/pdf/manifest.json").read_text(encoding="utf-8"))
+        self.assertIn(".md", m["hub"]["opens"])
+        with self.assertRaises(ModuleError):                    # 画像を Markdown として読まない
+            png = self.reg_root / "WIP" / "x.png"
+            png.write_bytes(b"\x89PNG\r\n\x1a\n")
+            self.registry.call("pdf", "read_text", {"key": self.registry.call("pdf", "open_doc", {"path": str(png)})["key"]})
+
+    def test_open_url_only_web(self):
+        with self.assertRaises(ModuleError):
+            self.host.open_url("javascript:alert(1)")
+        with self.assertRaises(ModuleError):
+            self.host.open_url("file:///C:/Windows/system32/calc.exe")

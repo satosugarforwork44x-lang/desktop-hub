@@ -1,6 +1,9 @@
 // folders/ui/panel.js — フォルダ窓（1レジストリ = 1窓）の中身
 import { icons, fileIcon } from "/ui/js/icons.js";
 
+// Hub の中で開く種類（ダブルクリック・Enter）。PDF や画像は利用者が選んだアプリのままにする
+const IN_HUB = /\.(md|markdown)$/i;
+
 export async function mount(el, ctx) {
   const reg = ctx.instance;
   const t = ctx.t;
@@ -225,7 +228,14 @@ export async function mount(el, ctx) {
     } catch (e) { err(e); }
   }
   async function openItem(rel) {
-    try { await ctx.host.openPath(await ctx.call("full_path", { registry: reg, rel })); } catch (e) { err(e); }
+    try {
+      const full = await ctx.call("full_path", { registry: reg, rel });
+      // Markdown は Hub のビューアで読む（Windows の既定のアプリがメモ帳でも）。ほかは関連付けたアプリ
+      if (IN_HUB.test(full)) {
+        const w = await ctx.host.openFile(full);
+        if (!ctx.isNative() && w?.url) window.open(w.url, w.id, "width=880,height=1000");
+      } else await ctx.host.openPath(full);
+    } catch (e) { err(e); }
   }
   async function reveal(rel) {
     try { await ctx.host.revealPath(await ctx.call("full_path", { registry: reg, rel })); } catch (e) { err(e); }

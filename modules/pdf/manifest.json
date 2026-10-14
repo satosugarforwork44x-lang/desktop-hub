@@ -36,7 +36,9 @@
       ".webp",
       ".bmp",
       ".tif",
-      ".tiff"
+      ".tiff",
+      ".md",
+      ".markdown"
     ],
     "blob": "blob_path"
   },
@@ -80,6 +82,14 @@
     {
       "fn": "reveal_path",
       "summary": "開いた PDF の実パス（エクスプローラーで表示用）"
+    },
+    {
+      "fn": "read_text",
+      "summary": "Markdown の中身を読む"
+    },
+    {
+      "fn": "mtime",
+      "summary": "ファイルの更新時刻（自動で読み直すため）"
     }
   ],
   "actions": [

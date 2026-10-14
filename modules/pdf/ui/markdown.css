@@ -1,0 +1,39 @@
+/* pdf/ui/markdown.css — Markdown の表示。色は Hub の変数だけを使う（ダーク／ライト・8 色で自動的に変わる） */
+.md-scroll { flex: 1; min-height: 0; overflow: auto; outline: none; }
+.md-body {
+  --md-scale: 1;
+  max-width: 820px; margin: 0 auto; padding: 20px 28px 48px;
+  font-size: calc(14px * var(--md-scale)); line-height: 1.8; color: var(--text);
+  user-select: text; overflow-wrap: anywhere;
+}
+.md-body > :first-child { margin-top: 0; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 { line-height: 1.4; margin: 1.6em 0 .6em; font-weight: 650; scroll-margin-top: 12px; }
+.md-body h1 { font-size: 1.6em; padding-bottom: .3em; border-bottom: 1px solid var(--line); }
+.md-body h2 { font-size: 1.3em; padding-bottom: .25em; border-bottom: 1px solid var(--line); }
+.md-body h3 { font-size: 1.1em; }
+.md-body h4, .md-body h5, .md-body h6 { font-size: 1em; color: var(--muted); }
+.md-body p, .md-body ul, .md-body ol, .md-body blockquote, .md-body table, .md-body pre { margin: 0 0 1em; }
+.md-body ul, .md-body ol { padding-left: 1.6em; }
+.md-body li + li { margin-top: .2em; }
+.md-body li > input[type="checkbox"] { margin: 0 .5em 0 -1.3em; vertical-align: -.1em; accent-color: var(--signal); }
+.md-body li:has(> input[type="checkbox"]) { list-style: none; }
+.md-body a { color: var(--signal); text-decoration: none; }
+.md-body a:hover { text-decoration: underline; }
+.md-body strong { font-weight: 650; }
+.md-body hr { border: 0; height: 1px; background: var(--line); margin: 2em 0; }
+.md-body blockquote { margin-left: 0; padding: .4em 1em; border-left: 3px solid color-mix(in srgb, var(--signal) 60%, transparent);
+  background: var(--ink-2); border-radius: 0 var(--r-s) var(--r-s) 0; color: var(--muted); }
+.md-body blockquote > :last-child { margin-bottom: 0; }
+.md-body code { font-family: "Cascadia Mono", Consolas, "BIZ UDGothic", monospace; font-size: .88em;
+  padding: .12em .4em; border-radius: 5px; background: var(--well); color: var(--code-text); }
+.md-body pre { padding: 12px 14px; border-radius: var(--r); background: var(--well); overflow: auto; line-height: 1.55; }
+.md-body pre code { padding: 0; background: none; color: var(--text); font-size: .86em; }
+.md-body table { border-collapse: collapse; display: block; overflow-x: auto; max-width: 100%; }
+.md-body th, .md-body td { padding: 6px 12px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.md-body th { background: var(--ink-2); font-weight: 600; }
+.md-body tr:nth-child(2n) td { background: color-mix(in srgb, var(--ink-2) 50%, transparent); }
+.md-img { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 8px; border-radius: var(--pill);
+  background: var(--ink-3); color: var(--muted) !important; font-size: .9em; }
+.md-img:hover { color: var(--text) !important; text-decoration: none !important; }
+.md-img .icon, .md-img svg { width: 15px; height: 15px; }
+.md-error { color: var(--danger); }

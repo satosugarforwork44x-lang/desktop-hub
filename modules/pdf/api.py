@@ -28,7 +28,9 @@ from pathlib import Path
 _ctx = None
 RECENT_MAX = 30
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".gif", ".webp", ".bmp", ".tif", ".tiff"}
-DOC_EXTS = {".pdf"} | IMAGE_EXTS
+MD_EXTS = {".md", ".markdown"}
+MD_MAX_BYTES = 5 * 1024 * 1024          # これより大きい md は読まない（表示が重くなる）
+DOC_EXTS = {".pdf"} | IMAGE_EXTS | MD_EXTS
 NEEDS_PNG = {".tif", ".tiff"}          # WebView2 で直接表示できない形式
 
 
@@ -61,7 +63,8 @@ def _path_of(key: str) -> Path:
 
 
 def _kind(p: Path) -> str:
-    return "pdf" if p.suffix.lower() == ".pdf" else "image"
+    ext = p.suffix.lower()
+    return "pdf" if ext == ".pdf" else "md" if ext in MD_EXTS else "image"
 
 
 def _register(p: Path) -> str:
@@ -76,7 +79,7 @@ def _register(p: Path) -> str:
 
 
 def open_doc(path: str) -> dict:
-    """PDF か画像を開く。返り値の panel を host.openPanel に渡すとビューアの窓が開く。"""
+    """PDF・画像・Markdown を開く。返り値の panel を host.openPanel に渡すとビューアの窓が開く。"""
     p = Path(path).expanduser()
     if p.suffix.lower() not in DOC_EXTS or not p.is_file():
         raise PdfError(f"開けない種類のファイル: {path}")
@@ -99,6 +102,28 @@ def neighbor(key: str, step: int = 1) -> dict:
     nxt = files[(i + (1 if step > 0 else -1)) % len(files)]
     k = _register(nxt.resolve())
     return {"key": k, "name": nxt.name, "index": files.index(nxt) + 1, "count": len(files)}
+
+
+def read_text(key: str) -> dict:
+    """Markdown の中身（表示は画面の markdown.js）。文字コードは UTF-8 → 日本語の Windows（cp932）の順に試す。"""
+    p = _path_of(key)
+    if _kind(p) != "md":
+        raise PdfError("Markdown ではない")
+    st = p.stat()
+    if st.st_size > MD_MAX_BYTES:
+        raise PdfError(f"大きすぎて表示できない（{MD_MAX_BYTES // 1048576}MB まで）")
+    raw = p.read_bytes()
+    for enc in ("utf-8-sig", "cp932"):
+        try:
+            return {"text": raw.decode(enc), "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p)}
+        except UnicodeDecodeError:
+            continue
+    return {"text": raw.decode("utf-8", errors="replace"), "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p)}
+
+
+def mtime(key: str) -> float:
+    """外で書き換えられたかを見る（Claude が書き直したときに自動で読み直すため）。"""
+    return _path_of(key).stat().st_mtime
 
 
 def open_path(path: str) -> str:
@@ -340,15 +365,15 @@ def association() -> dict:
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, rf"Software\Classes\{PROGID}\shell\open\command") as k:
             cmd = winreg.QueryValueEx(k, "")[0]
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.png\OpenWithProgids") as k:
-            winreg.QueryValueEx(k, PROGID)          # 画像の登録がない（前の版で登録した）なら、登録し直しを促す
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.md\OpenWithProgids") as k:
+            winreg.QueryValueEx(k, PROGID)          # 新しく足した種類（.md）の登録がない（前の版で登録した）なら、登録し直しを促す
         return {"supported": True, "registered": True, "current": cmd == _command()}
     except OSError:
         return {"supported": True, "registered": False}
 
 
 def set_association(on: bool) -> dict:
-    """PDF の「プログラムから開く」に Hub を出す（on=True）／消す。既定のアプリにするかは Windows 側で利用者が選ぶ。"""
+    """PDF・画像・Markdown の「プログラムから開く」に Hub を出す（on=True）／消す。既定のアプリにするかは Windows 側で利用者が選ぶ。"""
     if os.name != "nt":
         raise PdfError("Windows でだけ使えます")
     import ctypes

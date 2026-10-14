@@ -915,6 +915,15 @@ class Host:
         return {"opened": str(p)}
 
     @staticmethod
+    def open_url(url: str) -> dict:
+        """既定のブラウザで開く（Markdown の中のリンクなど）。http / https / mailto だけ。"""
+        if not re.match(r"^(https?://|mailto:)", url or "", re.I):
+            raise ModuleError("開けるのは http / https / mailto のリンクだけ")
+        import webbrowser
+        webbrowser.open(url)
+        return {"opened": url}
+
+    @staticmethod
     def reveal_path(path: str) -> dict:
         p = Path(path)
         if not p.exists():

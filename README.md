@@ -21,7 +21,7 @@ Claude can use it too, through MCP, within the limits you set.
 | Feature | What it does |
 |---|---|
 | **Folder panels** | Drop scattered desktop files into named folder panels. Never overwrites, undo up to 30 steps, deletes go to the Recycle Bin |
-| **Viewer** | PDFs **and images** (PNG / JPEG / GIF / WebP / BMP / **TIFF**, multi-page too) in one light viewer: thumbnails, zoom, rotate, search, **print**, browse the photos in a folder with ← →. Can be set as "Open with". Extras: text via OCR, PDF to images (PNG / JPEG / TIFF G4) |
+| **Viewer** | PDFs **and images** (PNG / JPEG / GIF / WebP / BMP / **TIFF**, multi-page too) in one light viewer: thumbnails, zoom, rotate, search, **print**, browse the photos in a folder with ← →. Can be set as "Open with". Extras: text via OCR, PDF to images (PNG / JPEG / TIFF G4). **Markdown** (.md) is shown as a formatted page and reloads itself when the file changes; double-clicking a .md in a folder panel opens it here |
 | **Media** | Videos and music with a playlist (drop files or a whole folder). Music gets a spectrum ring in your theme colors. Formats WebView2 can't play (AVI, WMV, WMA, …) can be converted with **your own** ffmpeg |
 | **Notes** | One box for notes and to-dos: type and press Enter, tick ☐ to make it a to-do. Paste screenshots with Ctrl+V |
 | **Timer** | One-click 5 / 15 / 25 / 50 min (or any length). The time left shows on the bar, with a soft chime at the end. **Focus mode** turns the ring into particles that ripple and beat like a heart |
@@ -220,6 +220,7 @@ Third-party libraries (each under its own license):
 | pywebview | windows (WebView2) | BSD-3-Clause |
 | Send2Trash | Recycle Bin | BSD-3-Clause |
 | PDF.js | PDF viewer (bundled in `modules/pdf/ui/vendor/pdfjs`) | Apache-2.0 |
+| marked | Markdown viewer (bundled in `modules/pdf/ui/vendor/marked`) | MIT |
 | PyMuPDF | PDF to image / text | **AGPL-3.0** (not bundled; installed separately via pip) |
 | Pillow | image output, images for Claude | MIT-CMU |
 | rawpy (optional) | camera RAW for Claude | MIT (bundles LibRaw: LGPL-2.1 / CDDL-1.0) — not bundled, install with pip |
