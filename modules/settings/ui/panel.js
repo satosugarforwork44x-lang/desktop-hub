@@ -1,6 +1,7 @@
 // settings/ui/panel.js — 設定画面。変えた項目だけを保存し、反映できるものはその場で反映する
 import { icons } from "/ui/js/icons.js";
 import { listTiles, arrange } from "/ui/js/tiles.js";
+import { ACCENTS } from "/ui/js/theme.js";
 
 export async function mount(el, ctx) {
   const t = ctx.t;
@@ -184,7 +185,7 @@ export async function mount(el, ctx) {
     swatches.className = "swatches";
     swatches.setAttribute("role", "radiogroup");
     swatches.setAttribute("aria-label", t("set.accent"));
-    for (const a of ["aurora", "ocean", "ember", "graphite"]) {
+    for (const a of ACCENTS) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = `swatch sw-${a}`;

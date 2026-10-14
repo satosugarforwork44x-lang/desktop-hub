@@ -2,7 +2,7 @@
    方針: 中性色の面に、3色のグラデーションを「薄く透かして」重ねる。
          はっきりした色は状態（開いている・選択中・主ボタン）にだけ使う。枠線は最小限、面の明るさで区切る。
 
-   テーマ = 明るさ（<html data-mode="dark|light">）× 色（<html data-accent="aurora|ocean|ember|graphite">）
+   テーマ = 明るさ（<html data-mode="dark|light">）× 色（<html data-accent="aurora|ocean|ember|graphite|forest|sakura|gold|indigo">）
    色は --c1-rgb / --c2-rgb / --c3-rgb の3つ（"R, G, B"）だけで決まり、他の色はここから計算する。
    ※ プルダウンの一覧・メニュー・お知らせは --solid-* を使う。明るさを足すときは必ず --solid-* も決めること */
 :root {
@@ -76,6 +76,19 @@
   --c1-rgb: 160, 172, 190; --c2-rgb: 112, 124, 146; --c3-rgb: 214, 220, 230; --signal: #A9B4C6;
   --primary-text: #0B0C10;
 }
+:root[data-accent="forest"] {     /* 若葉 → 深緑 → 苔。森の色 */
+  --c1-rgb: 110, 222, 150; --c2-rgb: 30, 150, 90; --c3-rgb: 186, 214, 96; --signal: #5FD394;
+}
+:root[data-accent="sakura"] {     /* 桜 → 薄紅 → 藤。やわらかい春の色 */
+  --c1-rgb: 250, 190, 210; --c2-rgb: 226, 104, 150; --c3-rgb: 176, 146, 236; --signal: #F29BBE;
+}
+:root[data-accent="gold"] {       /* 金 → 琥珀 → シャンパン。明るい面なので文字は濃く */
+  --c1-rgb: 246, 214, 130; --c2-rgb: 214, 160, 60; --c3-rgb: 236, 200, 160; --signal: #E6B85C;
+  --primary-text: #1A1408;
+}
+:root[data-accent="indigo"] {     /* 藍 → 紺 → 銀鼠。落ち着いた和の青 */
+  --c1-rgb: 104, 146, 214; --c2-rgb: 44, 70, 150; --c3-rgb: 172, 182, 204; --signal: #86A2E6;
+}
 
 /* ---- ライト ---- */
 :root[data-mode="light"] {
@@ -106,6 +119,10 @@
 :root[data-mode="light"][data-accent="aurora"], :root[data-mode="light"]:not([data-accent]) { --signal: #4F6EE8; }
 :root[data-mode="light"][data-accent="graphite"] { --signal: #5A6680; --c2-rgb: 90, 102, 124; --c3-rgb: 60, 70, 88; --primary-text: #FFFFFF; }
 :root[data-mode="light"][data-accent="ember"] { --signal: #D9466F; }
+:root[data-mode="light"][data-accent="forest"] { --signal: #1F8A55; }
+:root[data-mode="light"][data-accent="sakura"] { --signal: #C9457C; }
+:root[data-mode="light"][data-accent="gold"] { --signal: #9A6A12; --c2-rgb: 176, 124, 30; --c3-rgb: 150, 104, 50; --primary-text: #FFFFFF; }
+:root[data-mode="light"][data-accent="indigo"] { --signal: #2F4C9E; --c3-rgb: 110, 122, 150; }
 :root:lang(en) { --font: var(--font-en); }
 
 * { box-sizing: border-box; }
@@ -491,7 +508,7 @@ body.intro .bar-end { animation: intro-in .38s ease .48s both; }
 }
 
 /* 色の見本（設定）。見本の色は各テーマの3色をそのまま使う（今のテーマに関係なく本物の色を見せる） */
-.swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }   /* 8 色 = 4 列 × 2 段 */
 .swatch {
   display: grid; gap: 6px; justify-items: center; padding: 8px 4px; border: 0; border-radius: var(--r);
   background: var(--ink-2); color: var(--muted); cursor: pointer; transition: background .12s, color .12s;
@@ -504,6 +521,10 @@ body.intro .bar-end { animation: intro-in .38s ease .48s both; }
 .sw-ocean .swatch-chip { background: linear-gradient(110deg, rgb(56, 189, 248), rgb(37, 99, 235) 50%, rgb(20, 184, 166)); }
 .sw-ember .swatch-chip { background: linear-gradient(110deg, rgb(245, 158, 66), rgb(236, 72, 110) 50%, rgb(160, 92, 240)); }
 .sw-graphite .swatch-chip { background: linear-gradient(110deg, rgb(160, 172, 190), rgb(112, 124, 146) 50%, rgb(214, 220, 230)); }
+.sw-forest .swatch-chip { background: linear-gradient(110deg, rgb(110, 222, 150), rgb(30, 150, 90) 50%, rgb(186, 214, 96)); }
+.sw-sakura .swatch-chip { background: linear-gradient(110deg, rgb(250, 190, 210), rgb(226, 104, 150) 50%, rgb(176, 146, 236)); }
+.sw-gold .swatch-chip { background: linear-gradient(110deg, rgb(246, 214, 130), rgb(214, 160, 60) 50%, rgb(236, 200, 160)); }
+.sw-indigo .swatch-chip { background: linear-gradient(110deg, rgb(104, 146, 214), rgb(44, 70, 150) 50%, rgb(172, 182, 204)); }
 
 /* ================= メモ（notes） ================= */
 .notes { display: grid; gap: 10px; padding: 2px 12px 18px; }
@@ -566,7 +587,9 @@ body.intro .bar-end { animation: intro-in .38s ease .48s both; }
 /* フォーカスモード: リングを粒子にして大きく、ほかは隠す */
 .timer { transition: padding .2s; }
 .timer.focus { align-content: center; min-height: calc(100vh - 80px); }
-.timer.focus .timer-dial { width: min(86vw, calc(100vh - 150px)); height: min(86vw, calc(100vh - 150px)); }
+/* 光と放射線はリングの外へ 1.32 倍まで広がる（.timer-particles）。その分の余白を上下に取り、窓の上で見切れないようにする */
+.timer.focus { --dial: min(70vw, calc((100vh - 130px) / 1.36)); }
+.timer.focus .timer-dial { width: var(--dial); height: var(--dial); margin-block: calc(var(--dial) * .17); }
 .timer.focus .timer-dial svg { visibility: hidden; }
 .timer.focus .timer-particles { display: block; }
 .timer.focus .timer-new { display: none; }

@@ -3,6 +3,12 @@
 版の付け方: `MAJOR.MINOR.PATCH`（host/version.py）。
 MAJOR = モジュールとの約束を壊す変更 / MINOR = 機能の追加 / PATCH = 不具合の修正。
 
+## 0.9.0 — 2026-10-14
+### 追加
+- 色（アクセント）を 4 つ追加して 8 色に: Forest（森）/ Sakura（桜）/ Gold（金）/ Indigo（藍）。拡張は `--signal` `--c1-rgb`〜`--c3-rgb` `--tint` などの変数を使っているので、そのまま新しい色になる
+### 修正
+- タイマーの集中モード: 輪の外側の光と放射線が、窓の上で見切れていた。その分の余白を上下に取るようにした
+
 ## 0.8.0 — 2026-10-12
 ### 追加
 - Claude 連携: 画像を見る道具 `folders_read_image`（jpg / png / webp / gif / bmp / tif、rawpy があれば RAW）。長辺を縮めた JPEG で返す

@@ -46,7 +46,7 @@ EDITABLE = {
 MCP_ACCESS = {"hidden", "read", "write"}
 CHOICES = {
     ("lang",): {"auto", "ja", "en"}, ("appearance", "mode"): {"auto", "dark", "light"},
-    ("appearance", "accent"): {"aurora", "ocean", "ember", "graphite"}, ("bar", "dock"): {"top", "bottom", "left", "right"},
+    ("appearance", "accent"): {"aurora", "ocean", "ember", "graphite", "forest", "sakura", "gold", "indigo"}, ("bar", "dock"): {"top", "bottom", "left", "right"},
     ("bar", "labels"): {"auto", "icons", "folders", "full"}, ("windows", "corners"): {"round", "small", "square"},
     ("bar", "folders"): {"auto", "each", "group"},
 }

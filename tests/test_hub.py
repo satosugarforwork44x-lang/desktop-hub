@@ -1046,3 +1046,21 @@ class UploadTest(HubTestBase):
         finally:
             srvmod.UPLOAD_MAX = saved
         self.assertEqual(code, 413)
+
+
+class AccentListTest(unittest.TestCase):
+    """色（アクセント）の一覧は 4 か所にある。足すときに 1 か所でも漏れると、設定で選べない・色が付かない。"""
+
+    def test_accent_lists_match(self):
+        import re
+        from host.config import CHOICES
+        names = set(CHOICES[("appearance", "accent")])
+        theme = (ROOT / "ui/js/theme.js").read_text(encoding="utf-8")
+        self.assertEqual(set(re.findall(r'"(\w+)"', re.search(r"ACCENTS = \[(.*?)\]", theme).group(1))), names)
+        css = (ROOT / "ui/css/hub.css").read_text(encoding="utf-8")
+        i18n = (ROOT / "ui/js/i18n.js").read_text(encoding="utf-8")
+        for a in names - {"aurora"}:                       # aurora は :root の既定値
+            self.assertIn(f':root[data-accent="{a}"]', css, a)
+        for a in names:
+            self.assertIn(f".sw-{a} .swatch-chip", css, a)
+            self.assertEqual(i18n.count(f'"set.accent.{a}"'), 2, a)   # 日本語と英語

@@ -151,7 +151,7 @@ Changes made in Settings are saved to `%LOCALAPPDATA%\Hub\hub.config.json` (crea
 |---|---|---|
 | `lang` | `auto` / `ja` / `en` | `auto` (follows Windows) |
 | `appearance.mode` | `dark` / `light` / `auto` | `dark` |
-| `appearance.accent` | `aurora` / `ocean` / `ember` / `graphite` | `aurora` |
+| `appearance.accent` | `aurora` / `ocean` / `ember` / `graphite` / `forest` / `sakura` / `gold` / `indigo` | `aurora` |
 | `bar.dock` | `top` / `bottom` / `left` / `right` | `top` |
 | `bar.labels` | `auto` / `icons` / `folders` (folder names only) / `full` | `auto` |
 | `bar.length` | `"auto"` (fit the tiles) or a fixed length in px | `"auto"` |

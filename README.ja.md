@@ -147,7 +147,7 @@ Claude Desktop（や Cowork などの Claude）に、Hub の予定とフォル�
 |---|---|---|
 | `lang` | `auto` / `ja` / `en` | `auto`（Windows の言語に合わせる） |
 | `appearance.mode` | `dark` / `light` / `auto` | `dark` |
-| `appearance.accent` | `aurora` / `ocean` / `ember` / `graphite` | `aurora` |
+| `appearance.accent` | `aurora` / `ocean` / `ember` / `graphite` / `forest` / `sakura` / `gold` / `indigo` | `aurora` |
 | `bar.dock` | `top` / `bottom` / `left` / `right` | `top` |
 | `bar.labels` | `auto` / `icons` / `folders`（フォルダだけ名前）/ `full` | `auto` |
 | `bar.length` | `"auto"`（タイルに合わせる）か固定の長さ（px） | `"auto"` |
