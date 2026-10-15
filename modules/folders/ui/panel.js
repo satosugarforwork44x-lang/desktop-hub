@@ -12,6 +12,7 @@ export async function mount(el, ctx) {
   const cache = new Map();          // rel → items（開いたフォルダの中身）
   const expanded = new Set([""]);   // 開いているフォルダ（"" は一番上）
   let selected = new Set();
+  let anchor = null;                // Shift＋クリックの起点
   let dropRel = null;               // ドロップ先（null=なし, ""=一番上）
   let lastNativeTarget = "";        // エクスプローラーからのドロップ先を覚えておく
   let undoCount = 0;
@@ -27,6 +28,7 @@ export async function mount(el, ctx) {
   const undoBtn = ctx.addTool(icons.undo, t("folders.undo"), doUndo);
   ctx.addTool(icons.newFolder, t("folders.newFolder"), () => newFolder(""));
   ctx.addTool(icons.refresh, t("folders.refresh"), () => reload());
+  const trashBtn = ctx.addTool(icons.trash, t("folders.trashSel"), () => selected.size && doTrash([...selected]));
 
   // ---- 読み込み ----
   async function load(rel) {
@@ -73,10 +75,12 @@ export async function mount(el, ctx) {
       }
     };
     walk(top, 0);
+    trashBtn.disabled = selected.size === 0;
+    trashBtn.title = selected.size ? t("folders.trashN", { n: selected.size }) : t("folders.trashSel");
     undoBtn.disabled = undoCount === 0;
     undoBtn.title = undoCount ? t("folders.undoLeft", { n: undoCount }) : t("folders.undoNone");
     const n = top.length;
-    ctx.setStatus(n ? t("folders.items", { n }) : "");
+    ctx.setStatus(selected.size > 1 ? t("folders.selectedN", { n: selected.size }) : n ? t("folders.items", { n }) : "");
   }
 
   function row(it, depth) {
@@ -128,13 +132,27 @@ export async function mount(el, ctx) {
       return;
     }
     if (e.detail > 2) return;
-    if (e.ctrlKey) selected.has(rel) ? selected.delete(rel) : selected.add(rel);
-    else selected = new Set([rel]);
+    if (e.shiftKey && anchor) {                     // Shift＋クリック: 起点からここまでをまとめて選ぶ
+      const rels = [...tree.querySelectorAll(".row")].map((x) => x.dataset.rel);
+      const [a, b] = [rels.indexOf(anchor), rels.indexOf(rel)].sort((x, y) => x - y);
+      if (a >= 0) selected = new Set([...(e.ctrlKey ? selected : []), ...rels.slice(a, b + 1)]);
+    } else {
+      if (e.ctrlKey) selected.has(rel) ? selected.delete(rel) : selected.add(rel);
+      else selected = new Set([rel]);
+      anchor = rel;
+    }
     if (r.dataset.dir && onChev) toggle(rel);
     else render();
     tree.focus();
   });
   tree.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key.toLowerCase() === "a") {   // Ctrl+A: 見えている項目をすべて選ぶ
+      e.preventDefault();
+      selected = new Set([...tree.querySelectorAll(".row")].map((x) => x.dataset.rel));
+      render();
+      return;
+    }
+    if (e.key === "Escape" && selected.size) { selected.clear(); render(); return; }
     const sel = [...selected];
     if (!sel.length) return;
     if (e.key === "Enter") { const it = itemOf(sel[0]); it?.dir ? toggle(sel[0]) : openItem(sel[0]); }

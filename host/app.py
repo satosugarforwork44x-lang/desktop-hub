@@ -545,6 +545,8 @@ class Host:
     # ---------- URL ----------
     def url(self, page: str, **q) -> str:
         q["t"] = self.token
+        if not isinstance(self.backend, NullBackend):
+            q["native"] = 1                      # 本物の窓（pywebview の準備より先に画面が動いても分かるように）
         qs = "&".join(f"{k}={v}" for k, v in q.items())
         return f"{self._base()}/ui/{page}?{qs}"
 

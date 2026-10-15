@@ -61,7 +61,8 @@ export const host = {
 };
 
 // 本物の窓（pywebview）の中か、ブラウザでの確認表示か
-export const isNative = () => typeof window.pywebview !== "undefined";
+// pywebview は画面が動き始めた後で window.pywebview を用意するので、URL の印（native=1）でも見分ける
+export const isNative = () => typeof window.pywebview !== "undefined" || params.get("native") === "1";
 
 // エクスプローラーからのドロップ。フルパスはPython側から window.hub._nativeDrop(paths) で届く
 let dropHandler = null;
