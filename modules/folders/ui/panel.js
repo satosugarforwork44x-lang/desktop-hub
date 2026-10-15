@@ -59,7 +59,17 @@ export async function mount(el, ctx) {
     const walk = (items, depth) => {
       for (const it of items) {
         tree.append(row(it, depth));
-        if (it.dir && expanded.has(it.rel) && cache.has(it.rel)) walk(cache.get(it.rel), depth + 1);
+        if (it.dir && expanded.has(it.rel) && cache.has(it.rel)) {
+          const kids = cache.get(it.rel);
+          if (kids.length) walk(kids, depth + 1);
+          else {                                     // 開いたのに何も出ないと「開けない」ように見えるので、空と書く
+            const e = document.createElement("div");
+            e.className = "sub-empty";
+            e.style.setProperty("--depth", depth + 1);
+            e.textContent = t("folders.emptySub");
+            tree.append(e);
+          }
+        }
       }
     };
     walk(top, 0);
@@ -111,13 +121,16 @@ export async function mount(el, ctx) {
     const rel = r.dataset.rel;
     // ダブルクリック: 1 回目のクリックで行を描き直すため、dblclick イベントは行に届かない（親の .tree に届く）。
     // クリックの回数（e.detail）で見分ける
-    if (e.detail === 2 && !e.ctrlKey && !e.target.closest(".chev")) {
+    const onChev = !!e.target.closest(".chev");
+    if (e.detail >= 2 && onChev) return;           // ▶ のダブルクリック: 1 回目で開いたので、2 回目で閉じない
+    if (e.detail === 2 && !e.ctrlKey) {
       r.dataset.dir ? toggle(rel) : openItem(rel);
       return;
     }
+    if (e.detail > 2) return;
     if (e.ctrlKey) selected.has(rel) ? selected.delete(rel) : selected.add(rel);
     else selected = new Set([rel]);
-    if (r.dataset.dir && e.target.closest(".chev")) toggle(rel);
+    if (r.dataset.dir && onChev) toggle(rel);
     else render();
     tree.focus();
   });

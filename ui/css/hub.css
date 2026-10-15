@@ -287,6 +287,7 @@ body.drop-root .panel-body { box-shadow: inset 0 0 0 2px var(--amber); border-ra
   padding: 0 8px 0 calc(6px + var(--depth, 0) * 16px); cursor: default; white-space: nowrap;
 }
 .row:hover { background: var(--ink-2); }
+.sub-empty { height: var(--row); display: flex; align-items: center; padding-left: calc(6px + var(--depth, 0) * 16px + 22px); color: var(--faint); font-size: 12px; }
 .row.selected { background: var(--ink-3); }
 .tree:focus-visible { outline: none; }
 .tree:focus-visible .row.selected { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--signal) 70%, transparent); }
