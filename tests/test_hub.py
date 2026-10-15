@@ -1131,3 +1131,17 @@ class CaptureExcludeTest(HubTestBase):
 
     def test_module_can_reach_it_through_ctx(self):
         self.assertTrue(callable(getattr(self.registry.host, "set_capture_excluded", None)))
+
+
+class ReopenCollapsedTest(HubTestBase):
+    """畳んだまま開いているパネルを、もう一度開こうとしたら広げる（0.10.3）。"""
+
+    def test_reopen_expands(self):
+        self.host.open_panel("folders:WIP")
+        self.host.collapse_panel("folders:WIP", True)
+        self.assertEqual(self.host.backend.windows["folders:WIP"]["geom"][3], PANEL_HEADER_H)
+        r = self.host.open_panel("folders:WIP")
+        self.assertTrue(r["already"])
+        self.assertFalse(self.host.panel_state("folders:WIP")["collapsed"])
+        self.assertGreater(self.host.backend.windows["folders:WIP"]["geom"][3], PANEL_HEADER_H)
+        self.assertEqual(self.host.backend.windows["folders:WIP"].get("reloads"), 1)

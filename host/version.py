@@ -5,6 +5,6 @@
   PATCH … 不具合の修正
 モジュールは manifest の "requires": {"hub": ">=0.5"} で、動く版を宣言できる。
 """
-VERSION = "0.10.2"
+VERSION = "0.10.3"
 # モジュールとの約束の版。MAJOR と同じ考え方で、壊す変更のときだけ上げる
 MODULE_API = 1

@@ -62,7 +62,7 @@ def round_corners(hwnd: int, style: str = "round") -> bool:
         return res == 0
     except Exception:
         return False
-PANEL_HEADER_H = 32         # パネルを見出しだけに畳んだときの高さ(px)
+PANEL_HEADER_H = 42         # パネルを見出しだけに畳んだときの高さ(px)。hub.css の .panel-head と同じ
 
 
 # ---------- Windows: 作業領域と物理ピクセルでの配置 ----------
@@ -663,6 +663,11 @@ class Host:
         mid = self.module_of(pid)
         mod = self.registry.get(mid)  # 未登録ならここでエラー
         if self.backend.exists(pid):
+            # もう開いている: 手前に出す。畳んであれば広げる（細い見出しだけだと「開かない」ように見えるため）
+            if self.panel_state(pid).get("collapsed"):
+                self.collapse_panel(pid, False)
+                self.backend.reload(pid)              # 画面側の「畳んだ」状態も合わせる
+            self.backend.focus(pid)
             return {"id": pid, "open": True, "already": True}
         st = self.panel_state(pid)
         h = PANEL_HEADER_H if st.get("collapsed") else st["h"]
