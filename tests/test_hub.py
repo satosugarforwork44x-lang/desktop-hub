@@ -1145,3 +1145,11 @@ class ReopenCollapsedTest(HubTestBase):
         self.assertFalse(self.host.panel_state("folders:WIP")["collapsed"])
         self.assertGreater(self.host.backend.windows["folders:WIP"]["geom"][3], PANEL_HEADER_H)
         self.assertEqual(self.host.backend.windows["folders:WIP"].get("reloads"), 1)
+
+    def test_open_after_restart_is_expanded(self):
+        self.host.open_panel("folders:WIP")
+        self.host.collapse_panel("folders:WIP", True)
+        self.host.close_panel("folders:WIP")
+        self.host.open_panel("folders:WIP")                       # 次に開くとき（再起動後の復元も同じ）
+        self.assertFalse(self.host.panel_state("folders:WIP")["collapsed"])
+        self.assertGreater(self.host.backend.windows["folders:WIP"]["geom"][3], PANEL_HEADER_H)

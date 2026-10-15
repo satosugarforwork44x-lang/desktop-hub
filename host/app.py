@@ -218,6 +218,10 @@ class NullBackend:
         if wid in self.windows:
             self.windows[wid]["geom"][2:] = [w, h]
 
+    def set_height(self, wid, h):
+        if wid in self.windows:
+            self.windows[wid]["geom"][3] = h
+
     def move(self, wid, x, y):
         if wid in self.windows:
             self.windows[wid]["geom"][:2] = [x, y]
@@ -350,6 +354,17 @@ class PywebviewBackend:
         fp = {"nw": self.FixPoint.NORTH | self.FixPoint.WEST, "ne": self.FixPoint.NORTH | self.FixPoint.EAST,
               "sw": self.FixPoint.SOUTH | self.FixPoint.WEST}.get(anchor, self.FixPoint.NORTH | self.FixPoint.WEST)
         win.resize(int(w), int(h), fp)
+
+    def set_height(self, wid, h):
+        """窓の高さを、画面の拡大率を含めた実際の大きさで決める（畳んだときの見出しの高さ用）。
+        pywebview の resize は枠のある窓の分を差し引くため、枠のない窓を低くすると見出しが消えて細い線になる。"""
+        hwnd = self._hwnd(wid)
+        r = _win_get_rect(hwnd) if hwnd and os.name == "nt" else None
+        if r and _win_set_rect(hwnd, r[0], r[1], r[2], round(h * _win_scale(hwnd))):
+            return
+        win = self.windows.get(wid)
+        if win:
+            self.resize(wid, win.width, h)
 
     def move(self, wid, x, y):
         win = self.windows.get(wid)
@@ -670,7 +685,8 @@ class Host:
             self.backend.focus(pid)
             return {"id": pid, "open": True, "already": True}
         st = self.panel_state(pid)
-        h = PANEL_HEADER_H if st.get("collapsed") else st["h"]
+        st["collapsed"] = False            # 開くときはいつも広げた状態で（畳んだまま開くと細い線になり、戻せなくなることがあった）
+        h = st["h"]
         title = mod.manifest.get("name", mid) + (f" — {pid.split(':', 1)[1]}" if ":" in pid else "")
         if ":" in pid and mod.api is not None and hasattr(mod.api, "instance_title"):
             try:
@@ -739,7 +755,10 @@ class Host:
         st = self.panel_state(pid)
         st["collapsed"] = bool(collapsed)
         self.store.set("window", pid, st)
-        self.backend.resize(pid, st["w"], PANEL_HEADER_H if collapsed else st["h"])
+        if collapsed:
+            self.backend.set_height(pid, PANEL_HEADER_H)
+        else:
+            self.backend.resize(pid, st["w"], st["h"])
         return st
 
     def resize_panel(self, pid: str, w: int, h: int) -> dict:
