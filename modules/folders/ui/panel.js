@@ -156,11 +156,10 @@ export async function mount(el, ctx) {
       { label: t("folders.reveal"), icon: icons.reveal, onClick: () => reveal(rel) },
       { label: t("folders.rename"), icon: icons.rename, onClick: () => startRename(rel), disabled: rels.length > 1 },
       { label: t("folders.newFolderIn"), icon: icons.newFolder, onClick: () => newFolder(r.dataset.dir ? rel : parentOf(rel)) },
-      "-",
-      ...(others.length ? [{ label: t("folders.moveTo"), heading: true },
-        ...others.map((o) => ({ label: o.label, icon: icons.move, onClick: () => moveTo(rels, o.id) }))] : []),
-      "-",
+      // ごみ箱は移動先の一覧より上に置く（フォルダ窓が増えると一覧が伸び、窓の下で見えなくなるため）
       { label: rels.length > 1 ? t("folders.trashN", { n: rels.length }) : t("folders.trash"), icon: icons.trash, danger: true, onClick: () => doTrash(rels) },
+      ...(others.length ? ["-", { label: t("folders.moveTo"), heading: true },
+        ...others.map((o) => ({ label: o.label, icon: icons.move, onClick: () => moveTo(rels, o.id) }))] : []),
     ], e.clientX, e.clientY);
   });
 
