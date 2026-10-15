@@ -51,6 +51,7 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
 |---|---|
 | Start | `start_hub.bat` (no console window) |
 | Troubleshoot | Start with `start_hub_debug.bat` to see errors. They're also logged to `%LOCALAPPDATA%\Hub\data\hub.log` |
+| Hub doesn't show up in screen sharing or screenshots | While an extension (Rec Sketch) records with "screen too", Hub's windows are excluded from screen capture so they don't end up in the meeting snapshots. They come back when recording stops. To show Hub while screen sharing, record without "screen too" |
 | "Not installed" errors | Install packages into **the Python that runs Hub** (shown in Settings → "About this Hub"). Plain `py` targets the newest Python (e.g. 3.15), so use `py -3.14 -m pip install …`. If you switch Python versions, paste the Claude integration config again (Settings → Copy) |
 | Quit | ⏻ at the end of the bar |
 | Start with Windows | Settings (⚙) → Startup → "Open Hub when Windows starts" |

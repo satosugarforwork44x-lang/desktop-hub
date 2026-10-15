@@ -1110,3 +1110,24 @@ class MarkdownViewerTest(HubTestBase):
             self.host.open_url("javascript:alert(1)")
         with self.assertRaises(ModuleError):
             self.host.open_url("file:///C:/Windows/system32/calc.exe")
+
+
+class CaptureExcludeTest(HubTestBase):
+    """Hub の窓を画面の取り込みから外す（0.10.0。レックスケッチが「画面も」で録る間だけ使う）。"""
+
+    def test_null_backend_reports_unsupported(self):
+        r = self.host.set_capture_excluded(True, owner="rec")
+        self.assertEqual(set(r), {"on", "supported", "failed", "owners"})
+        self.assertTrue(r["on"])
+        self.assertFalse(r["supported"])                  # 確認用の表示では窓が無い
+        self.assertEqual(r["failed"], [])
+
+    def test_owners_are_counted(self):
+        self.host.set_capture_excluded(True, owner="rec")
+        self.host.set_capture_excluded(True, owner="other")
+        self.assertTrue(self.host.set_capture_excluded(False, owner="rec")["on"])     # まだ other がオン
+        self.assertFalse(self.host.set_capture_excluded(False, owner="other")["on"])
+        self.assertFalse(self.host.set_capture_excluded(False, owner="nobody")["on"])  # 余分に戻しても平気
+
+    def test_module_can_reach_it_through_ctx(self):
+        self.assertTrue(callable(getattr(self.registry.host, "set_capture_excluded", None)))

@@ -3,6 +3,14 @@
 版の付け方: `MAJOR.MINOR.PATCH`（host/version.py）。
 MAJOR = モジュールとの約束を壊す変更 / MINOR = 機能の追加 / PATCH = 不具合の修正。
 
+## 0.10.0 — 2026-10-15
+### 追加
+- モジュールから Hub の窓（バー・パネル・Web のミニ窓）をすべて「画面の取り込み」から外せるように: `ctx.host.set_capture_excluded(on, owner="rec")`
+  - Windows の `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`（Windows 10 2004 以降）。外した窓は、スクリーンショット・画面共有・録画で「無いもの」として後ろが写る。黒く塗る方式には落とさない
+  - オンの間に新しく開いた窓も外す。owner（モジュール）ごとに数え、全部オフで戻る。窓の性質なので Hub を終えれば必ず元に戻る
+  - 返り値 `{"on", "supported", "failed", "owners"}`。確認用の表示（`--dev`）では `supported: false`
+  - 使い道: レックスケッチが「画面も」で録音している間、Hub の窓が会議の静止画に写り込まないように
+
 ## 0.9.3 — 2026-10-15
 ### 追加
 - ビューアで Markdown（.md / .markdown）を読めるように。見出し・表・コード・チェックボックス付きで表示し、ファイルが書き換えられると自動で読み直す（Claude が書き直したときなど）。文字の大きさを変えられる

@@ -86,6 +86,24 @@ def _win_work_area() -> tuple[int, int, int, int] | None:
 ICON_PATH = Path(__file__).resolve().parent.parent / "assets" / "hub.ico"
 
 
+WDA_NONE, WDA_EXCLUDEFROMCAPTURE = 0x0, 0x11
+
+
+def capture_exclusion_supported() -> bool:
+    """「画面の取り込みから外す」が使えるか（Windows 10 2004 = build 19041 以降）。"""
+    return os.name == "nt" and getattr(sys, "getwindowsversion", lambda: None)() is not None \
+        and sys.getwindowsversion().build >= 19041
+
+
+def set_capture_affinity(hwnd: int, on: bool) -> bool:
+    """窓を画面の取り込み（スクリーンショット・画面共有・録画）から外す / 戻す。
+    外した窓は、取り込んだ画像の中で「無いもの」として後ろが写る。黒く塗る WDA_MONITOR には落とさない。"""
+    if not hwnd or not capture_exclusion_supported():
+        return False
+    import ctypes
+    return bool(ctypes.windll.user32.SetWindowDisplayAffinity(ctypes.c_void_p(hwnd), WDA_EXCLUDEFROMCAPTURE if on else WDA_NONE))
+
+
 def set_window_icon(hwnd: int, ico: Path = ICON_PATH) -> bool:
     """窓とタスクバーのアイコンを Hub のものにする（何もしなければ Python のアイコンになる）。"""
     if os.name != "nt" or not hwnd or not ico.exists():
@@ -237,6 +255,10 @@ class NullBackend:
     def set_corners(self, style):
         pass
 
+    def set_capture_excluded(self, on: bool) -> tuple[bool, list[str]]:
+        """(使えるか, 失敗した窓)。確認用の表示では窓が無いので何もしない。"""
+        return False, []
+
 
 class PywebviewBackend:
     """pywebview（Windowsでは WebView2）で本物の窓を作る。"""
@@ -248,6 +270,7 @@ class PywebviewBackend:
         from webview.window import FixPoint
         self.webview, self.FixPoint = webview, FixPoint
         self.windows: dict[str, Any] = {}
+        self.capture_excluded = False      # オンの間は、新しく開いた窓も画面の取り込みから外す
 
     def create(self, wid, title, url, x, y, w, h, on_top, on_closed, on_moved, on_resized, on_shown=None):
         win = self.webview.create_window(
@@ -258,6 +281,7 @@ class PywebviewBackend:
         self.windows[wid] = win
         win.events.shown += lambda: self._apply_corners(win, "small" if wid == "bar" else self.corners)
         win.events.shown += lambda: set_window_icon(self._hwnd(wid))
+        win.events.shown += lambda: self.capture_excluded and self._affinity(wid, True)
         if on_shown:
             win.events.shown += lambda: on_shown(wid)
 
@@ -276,6 +300,7 @@ class PywebviewBackend:
                                          background_color=self.window_bg, text_select=True)
         self.windows[wid] = win
         win.events.shown += lambda: set_window_icon(self._hwnd(wid))
+        win.events.shown += lambda: self.capture_excluded and self._affinity(wid, True)
 
         def closed():
             self.windows.pop(wid, None)
@@ -438,6 +463,27 @@ class PywebviewBackend:
             except Exception:
                 pass
 
+    def _affinity(self, wid, on: bool) -> bool:
+        """窓を作ったスレッド（WinForms の UI スレッド）で SetWindowDisplayAffinity を呼ぶ。"""
+        hwnd = self._hwnd(wid)
+        if not hwnd:
+            return False
+        try:
+            form = self.windows[wid].native
+            if form.InvokeRequired:
+                from System import Boolean, Func   # pythonnet（pywebview の WinForms が使っているもの）
+                return bool(form.Invoke(Func[Boolean](lambda: set_capture_affinity(hwnd, on))))
+        except Exception:
+            pass
+        return set_capture_affinity(hwnd, on)
+
+    def set_capture_excluded(self, on: bool) -> tuple[bool, list[str]]:
+        self.capture_excluded = bool(on)
+        if not capture_exclusion_supported():
+            return False, []
+        failed = [wid for wid in list(self.windows) if not self._affinity(wid, bool(on))]
+        return True, failed
+
     def set_corners(self, style):
         self.corners = style
         for wid, win in list(self.windows.items()):
@@ -465,6 +511,7 @@ def preferred_python() -> Path:
     exe = Path(r.stdout.strip()) if r.returncode == 0 else None
     return exe if exe and exe.exists() else here
 
+
 class Host:
     """窓の開閉・配置の記憶・OS操作をまとめる。HTTP API（server.py）から呼ばれる。"""
 
@@ -474,6 +521,7 @@ class Host:
         self.token = ""
         self.registry = None                # main で設定
         self._quitting = False
+        self._capture_owners: set[str] = set()   # Hub の窓を画面の取り込みから外しているモジュール
         self._save_timers: dict[str, threading.Timer] = {}
         # 📌（広げたまま）は次回の起動にも引き継ぐ
         self._bar_state = {"expanded": False, "pinned": bool(store.get("ui", "barPinned", False)),
@@ -742,6 +790,16 @@ class Host:
         t.daemon = True
         self._save_timers[key] = t
         t.start()
+
+    def set_capture_excluded(self, on: bool, owner: str = "") -> dict:
+        """Hub の窓（バー・パネル・Web のミニ窓）をすべて、画面の取り込み（スクリーンショット・画面共有・録画）から外す / 戻す。
+        モジュールの api.py から ctx.host.set_capture_excluded(True, owner="rec") のように呼ぶ。
+        owner ごとに数え、だれか 1 つでもオンなら外したまま。窓の性質なので Hub を終えれば必ず元に戻る（次の起動は写る状態）。"""
+        owner = owner or "?"
+        (self._capture_owners.add if on else self._capture_owners.discard)(owner)
+        state = bool(self._capture_owners)
+        supported, failed = self.backend.set_capture_excluded(state)
+        return {"on": state, "supported": supported, "failed": failed, "owners": sorted(self._capture_owners)}
 
     def quit(self) -> dict:
         """全窓を閉じる。開いていたパネルは「開いていた」と記憶したまま（次回復元）。"""
