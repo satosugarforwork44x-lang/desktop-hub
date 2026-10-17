@@ -41,7 +41,10 @@
       ".markdown",
       ".txt",
       ".text",
-      ".rtf"
+      ".rtf",
+      ".docx",
+      ".xlsx",
+      ".pptx"
     ],
     "blob": "blob_path",
     "upload": [
@@ -100,6 +103,18 @@
     {
       "fn": "write_text",
       "summary": "「書く」で直した文章を保存する（外で書き換えられていたら上書きしない）"
+    },
+    {
+      "fn": "office_info",
+      "summary": "LibreOffice が使えるか"
+    },
+    {
+      "fn": "office_text",
+      "summary": "Office の文字だけ"
+    },
+    {
+      "fn": "office_to_pdf",
+      "summary": "LibreOffice で PDF にして開く"
     }
   ],
   "actions": [

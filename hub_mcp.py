@@ -152,7 +152,9 @@ def create_server(config: dict | None = None, reload=None) -> tuple[MCPServer, o
 
     @mcp.tool(annotations=_annotations(True))
     def folders_read_text(panel: str, path: str, max_chars: int = 200000) -> dict:
-        """Read a text file (md, txt, csv, json, html, …) or the text of a PDF from a shared panel.
+        """Read a text file (md, txt, csv, json, html, …), the text of a PDF, or the text of a Word / Excel /
+        PowerPoint file (docx: headings as '#', tables as ' | '; xlsx: one tab-separated block per sheet with cached
+        formula results; pptx: one block per slide plus speaker notes) from a shared panel.
         PDFs are returned page by page ('--- p.N ---'); scanned pages without text are listed in 'scannedPages'
         with a hint (Hub's PDF viewer can OCR them into a .txt). Large files are truncated."""
         return call("folders", "read_text", registry=need(panel, "read"), rel=path, max_chars=max_chars)

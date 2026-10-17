@@ -1257,3 +1257,90 @@ class TextNoteTest(HubTestBase):
         kt, _ = self._open("plain.txt", b"x")
         with self.assertRaises(ModuleError):                        # txt には絵を入れられない
             self.registry.call_upload("pdf", "save_asset", b"\x89PNG", {"key": kt, "ext": "png"})
+
+
+class BarSummonTest(HubTestBase):
+    """Ctrl+Alt+H でバーを手前に呼び出す（0.11.2）。📌 で後ろに回っていても出し、もう一度押すか、ほかを触ると戻す。"""
+
+    def test_summon_and_sink(self):
+        self.host.create_bar()
+        self.host.bar_set(pinned=True)
+        self.assertEqual(self.host.backend.windows["bar"].get("z"), "bottom")
+        r = self.host.bar_summon()
+        self.assertTrue(r["raised"])
+        self.assertEqual(self.host.backend.windows["bar"].get("z"), "top")
+        self.host.bar_set(sink=True)                              # ほかの窓を触った（画面側から）
+        self.assertEqual(self.host.backend.windows["bar"].get("z"), "bottom")
+        self.host.bar_summon()
+        self.host.bar_summon()                                    # もう一度押すと戻る
+        self.assertEqual(self.host.backend.windows["bar"].get("z"), "bottom")
+        self.assertIn("_summoned", "".join(self.host.backend.windows["bar"].get("js", [])))
+
+
+def _office_zip(path, files: dict):
+    """テスト用の小さな Office ファイル（中身の XML だけを持つ zip）を作る。"""
+    import zipfile
+    with zipfile.ZipFile(path, "w") as z:
+        for name, xml in files.items():
+            z.writestr(name, xml)
+
+
+W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+S_NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+A_NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"'
+
+
+class OfficeTextTest(HubTestBase):
+    """Word / Excel / PowerPoint の文字を読む（0.11.2。Claude が MCP で読む・ビューアの簡易表示）。追加の依存なし。"""
+
+    def setUp(self):
+        super().setUp()
+        d = self.reg_root / "WIP"
+        _office_zip(d / "企画.docx", {"word/document.xml": f'<w:document {W_NS}><w:body>'
+            '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>企画書</w:t></w:r></w:p>'
+            '<w:p><w:r><w:t>目的</w:t></w:r><w:r><w:tab/><w:t>確認</w:t></w:r></w:p>'
+            '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>品番</w:t></w:r></w:p></w:tc><w:tc><w:p><w:r><w:t>価格</w:t></w:r></w:p></w:tc></w:tr></w:tbl>'
+            '</w:body></w:document>'})
+        _office_zip(d / "売上.xlsx", {
+            "xl/workbook.xml": f'<workbook {S_NS}><sheets><sheet name="売上" sheetId="1" r:id="rId1"/></sheets></workbook>',
+            "xl/_rels/workbook.xml.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                                          '<Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="x"/></Relationships>',
+            "xl/sharedStrings.xml": f'<sst {S_NS}><si><t>月</t></si><si><t>金額</t></si></sst>',
+            "xl/worksheets/sheet1.xml": f'<worksheet {S_NS}><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row>'
+                                        '<row r="2"><c r="A2" t="inlineStr"><is><t>1月</t></is></c><c r="C2"><f>B2*2</f><v>2400</v></c></row></sheetData></worksheet>'})
+        _office_zip(d / "提案.pptx", {
+            "ppt/slides/slide2.xml": f'<p:sld {A_NS}><a:p><a:r><a:t>二枚目</a:t></a:r></a:p></p:sld>',
+            "ppt/slides/slide1.xml": f'<p:sld {A_NS}><a:p><a:r><a:t>提案</a:t></a:r></a:p><a:p><a:r><a:t>ポイント</a:t></a:r></a:p></p:sld>',
+            "ppt/notesSlides/notesSlide1.xml": f'<p:notes {A_NS}><a:p><a:r><a:t>質問を受ける</a:t></a:r></a:p><a:p><a:r><a:t>1</a:t></a:r></a:p></p:notes>'})
+        (d / "壊れ.docx").write_bytes(b"not a zip")
+
+    def test_docx(self):
+        t = self.call("read_text", registry="WIP", rel="企画.docx")["text"]
+        self.assertEqual(t, "# 企画書\n目的\t確認\n品番 | 価格")
+
+    def test_xlsx(self):
+        t = self.call("read_text", registry="WIP", rel="売上.xlsx")["text"]
+        self.assertEqual(t, "--- シート: 売上 ---\n月\t金額\n1月\t\t2400")     # 計算式は保存されている値
+
+    def test_pptx_order_and_notes(self):
+        t = self.call("read_text", registry="WIP", rel="提案.pptx")["text"]
+        self.assertEqual(t, "--- スライド 1 ---\n提案\nポイント\n（ノート）質問を受ける\n\n--- スライド 2 ---\n二枚目")
+
+    def test_broken_file_explains(self):
+        with self.assertRaises(ModuleError) as cm:
+            self.call("read_text", registry="WIP", rel="壊れ.docx")
+        self.assertIn("古い形式", str(cm.exception))
+
+    def test_viewer_opens_office(self):
+        k = self.registry.call("pdf", "open_doc", {"path": str(self.reg_root / "WIP" / "提案.pptx")})["key"]
+        self.assertEqual(self.registry.call("pdf", "doc_info", {"key": k})["kind"], "office")
+        self.assertIn("スライド 1", self.registry.call("pdf", "office_text", {"key": k})["text"])
+        api = self.registry.modules["pdf"].api
+        saved = api._soffice
+        api._soffice = lambda: None                                # LibreOffice が無いとき
+        try:
+            self.assertFalse(self.registry.call("pdf", "office_info", {})["libreoffice"])
+            with self.assertRaises(ModuleError):
+                self.registry.call("pdf", "office_to_pdf", {"key": k})
+        finally:
+            api._soffice = saved

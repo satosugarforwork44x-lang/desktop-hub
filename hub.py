@@ -134,6 +134,9 @@ def main() -> int:
 
     def on_start():
         host.restore_panels()
+        from host.app import HOTKEY_LABEL, start_hotkey
+        if not start_hotkey(host.bar_summon):        # Ctrl+Alt+H でバーを呼び出す
+            print(f"{HOTKEY_LABEL} はほかのアプリが使っているため、バーの呼び出しには使えません")
         # ショートカット（起動時に開く・スタートメニュー・デスクトップ）を今の場所に合わせ直す（裏で。起動を待たせない）
         threading.Thread(target=host.repair_shortcuts, daemon=True).start()
         if args.open_file:

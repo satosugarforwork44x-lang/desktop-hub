@@ -340,6 +340,15 @@ def read_text(registry: str, rel: str, max_chars: int = 200_000) -> dict:
         raise FolderError("ファイルではない")
     if p.suffix.lower() == ".pdf":
         return _read_pdf_text(registry, p, max_chars)
+    if p.suffix.lower() in (".docx", ".xlsx", ".pptx"):                # Word / Excel / PowerPoint は文字だけ
+        from host.office import OfficeError, office_text
+        try:
+            text = office_text(p)
+        except OfficeError as e:
+            raise FolderError(f"{p.name}: {e}") from None
+        limit = max(1, min(int(max_chars), 1_000_000))
+        return {"rel": _rel(registry, p), "encoding": p.suffix.lower().lstrip("."), "truncated": len(text) > limit,
+                "text": text[:limit]}
     if p.suffix.lower() not in TEXT_EXTS:
         raise FolderError(f"テキストとして読めるのは {', '.join(sorted(TEXT_EXTS))} だけ")
     raw = p.read_bytes()[:READ_MAX]

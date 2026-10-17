@@ -32,7 +32,8 @@ MD_EXTS = {".md", ".markdown"}
 TEXT_EXTS = {".txt", ".text"}
 RTF_EXTS = {".rtf"}
 MD_MAX_BYTES = 5 * 1024 * 1024          # これより大きい文章は読まない（表示が重くなる）
-DOC_EXTS = {".pdf"} | IMAGE_EXTS | MD_EXTS | TEXT_EXTS | RTF_EXTS
+OFFICE_EXTS = {".docx", ".xlsx", ".pptx"}
+DOC_EXTS = {".pdf"} | IMAGE_EXTS | MD_EXTS | TEXT_EXTS | RTF_EXTS | OFFICE_EXTS
 WRITABLE = MD_EXTS | TEXT_EXTS          # 「書く」で直せる種類（rtf は書式を壊すので読むだけ）
 NEEDS_PNG = {".tif", ".tiff"}          # WebView2 で直接表示できない形式
 
@@ -75,6 +76,8 @@ def _kind(p: Path) -> str:
         return "text"
     if ext in RTF_EXTS:
         return "rtf"
+    if ext in OFFICE_EXTS:
+        return "office"
     return "image"
 
 
@@ -156,10 +159,12 @@ def rtf_to_text(rtf: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", "".join(out)).strip() + "\n"
 
 
-def _register(p: Path) -> str:
+def _register(p: Path, derived: bool = False) -> str:
     key = _key(p)
     docs = _docs()
     docs[key] = {"path": str(p), "name": p.name, "opened": time.time(), "kind": _kind(p)}
+    if derived:
+        docs[key]["derived"] = True        # Office から作った PDF（「最近開いたもの」には出さない）
     if len(docs) > RECENT_MAX:  # 古いものから忘れる
         for k, _ in sorted(docs.items(), key=lambda kv: kv[1]["opened"])[: len(docs) - RECENT_MAX]:
             docs.pop(k)
@@ -301,6 +306,65 @@ def blob_path(key: str) -> Path:
     return p
 
 
+# ---------- Office（docx / xlsx / pptx） ----------
+# docx は画面（docx-preview）で表示する。xlsx・pptx は LibreOffice があれば PDF にして PDF ビューアで、
+# 無ければ文字だけ（host/office.py）を出す。LibreOffice は同梱しない（入っていれば使う。ffmpeg と同じ考え方）
+def _soffice() -> Path | None:
+    conf = (_ctx.config or {}).get("soffice") if _ctx else None
+    cands = [conf] if conf else []
+    for env in ("ProgramFiles", "ProgramFiles(x86)"):
+        base = os.environ.get(env)
+        if base:
+            cands.append(str(Path(base) / "LibreOffice" / "program" / "soffice.exe"))
+    import shutil
+    cands += [shutil.which("soffice"), shutil.which("libreoffice")]
+    for c in cands:
+        if c and Path(c).is_file():
+            return Path(c)
+    return None
+
+
+def office_info() -> dict:
+    """LibreOffice が使えるか（設定画面・ビューアの案内用）。"""
+    s = _soffice()
+    return {"libreoffice": bool(s), "path": str(s) if s else ""}
+
+
+def office_text(key: str) -> dict:
+    """Office の文字だけ（LibreOffice が無いときの簡易表示）。"""
+    from host.office import OfficeError, office_text as _text
+    p = _path_of(key)
+    try:
+        return {"text": _text(p), "name": p.name, "path": str(p), "mtime": p.stat().st_mtime}
+    except OfficeError as e:
+        raise PdfError(str(e)) from None
+
+
+def office_to_pdf(key: str) -> dict:
+    """LibreOffice で PDF にして、PDF ビューアで開ける key を返す。変換した PDF は元のファイルが変わるまで使い回す。"""
+    p = _path_of(key)
+    if p.suffix.lower() not in OFFICE_EXTS:
+        raise PdfError("Office のファイルではない")
+    soffice = _soffice()
+    if not soffice:
+        raise PdfError("LibreOffice が見つからない（入れると見た目どおりに表示できます）")
+    st = p.stat()
+    out_dir = _cache_dir() / "office" / f"{key}-{int(st.st_mtime)}-{st.st_size}"
+    pdf = out_dir / (p.stem + ".pdf")
+    if not pdf.is_file():
+        out_dir.mkdir(parents=True, exist_ok=True)
+        profile = (_cache_dir() / "office" / "lo-profile").resolve().as_uri()   # 開いている LibreOffice とぶつからないよう専用の設定で
+        try:
+            subprocess.run([str(soffice), f"-env:UserInstallation={profile}", "--headless", "--norestore",
+                            "--convert-to", "pdf", "--outdir", str(out_dir), str(p)],
+                           capture_output=True, timeout=180, creationflags=0x08000000 if os.name == "nt" else 0)
+        except subprocess.TimeoutExpired:
+            raise PdfError("変換に時間がかかりすぎた（3 分）") from None
+        if not pdf.is_file():
+            raise PdfError("LibreOffice で PDF にできなかった（壊れたファイル・パスワード付きの可能性）")
+    return {"key": _register(pdf, derived=True), "name": p.name}
+
+
 def _cache_dir() -> Path:
     d = Path(_ctx.data_dir) / "cache"
     d.mkdir(parents=True, exist_ok=True)
@@ -348,6 +412,8 @@ def doc_info(key: str) -> dict:
 def recent() -> list[dict]:
     out = []
     for k, d in sorted(_docs().items(), key=lambda kv: -kv[1]["opened"]):
+        if d.get("derived"):
+            continue
         out.append({"key": k, "name": d["name"], "folder": str(Path(d["path"]).parent), "kind": d.get("kind", "pdf"),
                     "opened": d["opened"], "exists": Path(d["path"]).is_file()})
     return out

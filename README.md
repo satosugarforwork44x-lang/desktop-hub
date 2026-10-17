@@ -21,7 +21,7 @@ Claude can use it too, through MCP, within the limits you set.
 | Feature | What it does |
 |---|---|
 | **Folder panels** | Drop scattered desktop files into named folder panels. Never overwrites, undo up to 30 steps, deletes go to the Recycle Bin |
-| **Viewer** | PDFs **and images** (PNG / JPEG / GIF / WebP / BMP / **TIFF**, multi-page too) in one light viewer: thumbnails, zoom, rotate, search, **print**, browse the photos in a folder with ← →. Can be set as "Open with". Extras: text via OCR, PDF to images (PNG / JPEG / TIFF G4). **Notes**: .md / .txt / .rtf shown as a readable page (rtf as plain text). Switch to **Write** to type directly on plain, lined or grid paper with autosave; .md notes can hold **photos** and **handwriting** (saved next to the note in `<name>_files`). Double-clicking these files in a folder panel opens them here; right-click → "New note" to start one |
+| **Viewer** | PDFs **and images** (PNG / JPEG / GIF / WebP / BMP / **TIFF**, multi-page too) in one light viewer: thumbnails, zoom, rotate, search, **print**, browse the photos in a folder with ← →. Can be set as "Open with". Extras: text via OCR, PDF to images (PNG / JPEG / TIFF G4). **Notes**: .md / .txt / .rtf shown as a readable page (rtf as plain text). Switch to **Write** to type directly on plain, lined or grid paper with autosave; .md notes can hold **photos** and **handwriting** (saved next to the note in `<name>_files`). Double-clicking these files in a folder panel opens them here; right-click → "New note" to start one. **Word / Excel / PowerPoint** can be read without Office: docx keeps its page layout; xlsx / pptx show their real layout when LibreOffice (free, optional) is installed, otherwise as text |
 | **Media** | Videos and music with a playlist (drop files or a whole folder). Music gets a spectrum ring in your theme colors. Formats WebView2 can't play (AVI, WMV, WMA, …) can be converted with **your own** ffmpeg |
 | **Notes** | One box for notes and to-dos: type and press Enter, tick ☐ to make it a to-do. Paste screenshots with Ctrl+V |
 | **Timer** | One-click 5 / 15 / 25 / 50 min (or any length). The time left shows on the bar, with a soft chime at the end. **Focus mode** turns the ring into particles that ripple and beat like a heart |
@@ -60,8 +60,10 @@ On startup, a glowing line stretches along the screen edge and opens into the ba
 ## Using Hub
 
 **The bar**
-- Hover over the glowing line at the screen edge to expand; move away to collapse. 📌 keeps it expanded —
+- Rest the pointer on the glowing line at the screen edge for a moment (or click it) to expand; move away to collapse.
+  It doesn't open while you just pass by or drag a browser tab. 📌 keeps it expanded —
   a pinned bar sits **behind** other windows (like a desktop widget), so it never covers your work.
+- **Ctrl+Alt+H** brings the bar to the front from anywhere (even when pinned behind a maximized window). Press again or click elsewhere to send it back.
 - Drag the clock to slide the bar along the edge (the position is remembered).
 - The bar grows to fit its tiles (up to the screen width). Reorder or hide tiles in **Settings → Bar tiles** (drag the ⋮⋮ handle; the eye shows/hides).
 - Folder panels on the bar (Settings → Bar tiles): **Favorites only** (default — hidden folders open from the Folders tile), **Show all**, or **One tile**.
@@ -118,7 +120,7 @@ You choose the access level per folder panel. **By default, nothing is shared.**
 | Access | What Claude can do |
 |---|---|
 | Hidden (default) | Can't even see that the panel exists |
-| Read | List, search by name, and read text files (md / txt / csv / json / html, …) and **PDFs** (text layer; scanned pages are reported so you can OCR them first) |
+| Read | List, search by name, and read text files (md / txt / csv / json / html, …), **PDFs** (text layer; scanned pages are reported so you can OCR them first) and **Word / Excel / PowerPoint** (docx / xlsx / pptx, as text) |
 | Read & write | All of the above, plus **save deliverables** (text, UTF-8, up to 5 MB), move, rename, create folders, undo |
 
 - If a file with the same name exists, Hub saves as `name (2).md`. When asked to overwrite, it sends the old file **to the Recycle Bin first** (recoverable).
@@ -222,6 +224,8 @@ Third-party libraries (each under its own license):
 | Send2Trash | Recycle Bin | BSD-3-Clause |
 | PDF.js | PDF viewer (bundled in `modules/pdf/ui/vendor/pdfjs`) | Apache-2.0 |
 | marked | Markdown viewer (bundled in `modules/pdf/ui/vendor/marked`) | MIT |
+| docx-preview / JSZip | Word viewer (bundled in `modules/pdf/ui/vendor`) | Apache-2.0 / MIT (JSZip is MIT or GPLv3; used under MIT) |
+| LibreOffice (optional) | Shows xlsx / pptx (and docx "View as PDF") as PDF when installed. Not bundled: `winget install TheDocumentFoundation.LibreOffice` | MPL-2.0 |
 | PyMuPDF | PDF to image / text | **AGPL-3.0** (not bundled; installed separately via pip) |
 | Pillow | image output, images for Claude | MIT-CMU |
 | rawpy (optional) | camera RAW for Claude | MIT (bundles LibRaw: LGPL-2.1 / CDDL-1.0) — not bundled, install with pip |

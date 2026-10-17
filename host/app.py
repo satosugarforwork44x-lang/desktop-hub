@@ -86,6 +86,39 @@ def _win_work_area() -> tuple[int, int, int, int] | None:
 ICON_PATH = Path(__file__).resolve().parent.parent / "assets" / "hub.ico"
 
 
+HOTKEY_LABEL = "Ctrl+Alt+H"           # バーを呼び出すキー（どの画面でも効く）
+
+
+def start_hotkey(callback) -> bool:
+    """Ctrl+Alt+H を押したら callback() を呼ぶ（Windows の RegisterHotKey。専用のスレッドでメッセージを待つ）。
+    ほかのアプリが同じキーを使っていて登録できなければ False。"""
+    if os.name != "nt":
+        return False
+    ok = threading.Event()
+    result = {"ok": False}
+
+    def loop():
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        MOD_ALT, MOD_CONTROL, MOD_NOREPEAT, WM_HOTKEY = 0x1, 0x2, 0x4000, 0x0312
+        result["ok"] = bool(user32.RegisterHotKey(None, 1, MOD_ALT | MOD_CONTROL | MOD_NOREPEAT, ord("H")))
+        ok.set()
+        if not result["ok"]:
+            return
+        msg = wintypes.MSG()
+        while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
+            if msg.message == WM_HOTKEY:
+                try:
+                    callback()
+                except Exception:
+                    pass
+
+    threading.Thread(target=loop, daemon=True, name="hub-hotkey").start()
+    ok.wait(2)
+    return result["ok"]
+
+
 WDA_NONE, WDA_EXCLUDEFROMCAPTURE = 0x0, 0x11
 
 
@@ -262,6 +295,10 @@ class NullBackend:
     def set_capture_excluded(self, on: bool) -> tuple[bool, list[str]]:
         """(使えるか, 失敗した窓)。確認用の表示では窓が無いので何もしない。"""
         return False, []
+
+    def eval_js(self, wid, js):
+        if wid in self.windows:
+            self.windows[wid].setdefault("js", []).append(js)
 
 
 class PywebviewBackend:
@@ -492,6 +529,14 @@ class PywebviewBackend:
             pass
         return set_capture_affinity(hwnd, on)
 
+    def eval_js(self, wid, js):
+        win = self.windows.get(wid)
+        if win:
+            try:
+                win.evaluate_js(js)
+            except Exception:
+                pass
+
     def set_capture_excluded(self, on: bool) -> tuple[bool, list[str]]:
         self.capture_excluded = bool(on)
         if not capture_exclusion_supported():
@@ -537,6 +582,7 @@ class Host:
         self.registry = None                # main で設定
         self._quitting = False
         self._capture_owners: set[str] = set()   # Hub の窓を画面の取り込みから外しているモジュール
+        self._bar_raised = False                 # Ctrl+Alt+H で手前に呼び出している間（📌 でも後ろに回さない）
         self._save_timers: dict[str, threading.Timer] = {}
         # 📌（広げたまま）は次回の起動にも引き継ぐ
         self._bar_state = {"expanded": False, "pinned": bool(store.get("ui", "barPinned", False)),
@@ -595,7 +641,7 @@ class Host:
     def _apply_bar_z(self) -> None:
         """📌 で広げたままのバーは、他の窓の後ろに回す（作業の邪魔をしない。デスクトップに置いた部品のように振る舞う）。
         畳んだ細い線のときは、マウスで触れるよう常に手前に置く。"""
-        if self._bar_state["pinned"]:
+        if self._bar_state["pinned"] and not self._bar_raised:
             self.backend.z_order("bar", "bottom")
         elif bool(self.config.get("bar", {}).get("onTop", True)):
             self.backend.z_order("bar", "top")
@@ -609,7 +655,23 @@ class Host:
             self._recreating = False
         self.create_bar()
 
-    def bar_set(self, expanded: bool | None = None, pinned: bool | None = None, length: int | None = None) -> dict:
+    def bar_summon(self) -> dict:
+        """Ctrl+Alt+H: バーを手前に呼び出す（📌 で後ろに回っていても、畳んでいても）。もう一度押すと元に戻す。
+        ほかの窓を触ってバーから離れたときも、画面側（bar.js）が bar_set(sink=True) で元に戻す。"""
+        if not self.backend.exists("bar"):
+            return {}
+        if self._bar_raised:
+            self.backend.eval_js("bar", "window.hub && window.hub._sink && window.hub._sink()")
+            return self.bar_set(sink=True)
+        self._bar_raised = True
+        self.bar_set(expanded=True)
+        self.backend.z_order("bar", "top")
+        self.backend.focus("bar")
+        self.backend.eval_js("bar", "window.hub && window.hub._summoned && window.hub._summoned()")
+        return dict(self._bar_state, raised=True)
+
+    def bar_set(self, expanded: bool | None = None, pinned: bool | None = None, length: int | None = None,
+                sink: bool | None = None) -> dict:
         """expanded: 広げる/畳む。pinned: 📌。length: 中身に必要な長さ（設定が auto のとき、画面側が測って知らせる）"""
         if length is not None and self.config.get("bar", {}).get("length", "auto") == "auto":
             length = max(160, min(6000, int(length)))
@@ -617,6 +679,9 @@ class Host:
                 self._bar_state["length"] = length
                 self.store.set("ui", "barLength", length)
                 self.backend.place("bar", *self._bar_geom(self._bar_state["expanded"]))
+        if sink:
+            self._bar_raised = False
+            self._apply_bar_z()
         if pinned is not None:
             self._bar_state["pinned"] = bool(pinned)
             self.store.set("ui", "barPinned", bool(pinned))

@@ -43,9 +43,34 @@ async function setExpanded(on) {
   if (isNative()) await host.bar({ expanded: on }).catch(() => {});
   if (on) { refreshOpenState(); autoLength(); }
 }
-document.body.addEventListener("mouseenter", () => setExpanded(true));
+// 細い線に触れただけでは開かない: 少し（DWELL_MS）止まったときだけ開く。ボタンを押したまま（ブラウザのタブを
+// 引っ張っているときなど）は開かない。線をクリックしたら、すぐ開く
+const DWELL_MS = 400;
+let dwellTimer = null, hoverNow = false;
+const armDwell = (e) => {
+  if (!document.body.classList.contains("collapsed") || e.buttons) { clearTimeout(dwellTimer); dwellTimer = null; return; }
+  if (!dwellTimer) dwellTimer = setTimeout(() => { dwellTimer = null; if (hoverNow) setExpanded(true); }, DWELL_MS);
+};
+document.body.addEventListener("mouseenter", (e) => { hoverNow = true; clearTimeout(collapseTimer); armDwell(e); });
+document.body.addEventListener("mousemove", armDwell);
+document.body.addEventListener("mousedown", () => { if (document.body.classList.contains("collapsed")) { clearTimeout(dwellTimer); dwellTimer = null; } });
+document.body.addEventListener("click", () => { if (document.body.classList.contains("collapsed")) setExpanded(true); });
 document.body.addEventListener("mouseleave", () => {
+  hoverNow = false;
+  clearTimeout(dwellTimer); dwellTimer = null;
+  if (summoned) return;                                       // Ctrl+Alt+H で呼び出したときは、ほかを触るまで開いたまま
   collapseTimer = setTimeout(() => setExpanded(false), 700); // すぐ畳むと操作しにくいので少し待つ
+});
+
+// ---- Ctrl+Alt+H でどこからでも呼び出す（📌 で後ろに回っていても手前に出す）。ほかの窓を触ったら元に戻す ----
+let summoned = false;
+window.hub._summoned = () => { summoned = true; document.body.classList.remove("collapsed"); refreshOpenState(); autoLength(); };
+window.hub._sink = () => { summoned = false; if (!pinned && !hoverNow) setExpanded(false); };
+addEventListener("blur", () => {
+  if (!summoned) return;
+  summoned = false;
+  host.bar({ sink: true }).catch(() => {});
+  if (!pinned && !hoverNow) setExpanded(false);
 });
 // ブラウザでの確認表示では常に広げておく
 if (!isNative()) document.body.classList.remove("collapsed");

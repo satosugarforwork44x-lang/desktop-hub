@@ -8,7 +8,7 @@ const droppedNames = (dt) => {
 };
 
 // Hub の中で開く種類（ダブルクリック・Enter）。PDF や画像は利用者が選んだアプリのままにする
-const IN_HUB = /\.(md|markdown|txt|text|rtf)$/i;
+const IN_HUB = /\.(md|markdown|txt|text|rtf|docx|xlsx|pptx)$/i;
 
 export async function mount(el, ctx) {
   const reg = ctx.instance;

@@ -3,12 +3,12 @@
 //   ・1 つのファイルを見る窓（id = "pdf:<key>"）… PDF は viewer.js、画像は image.js、Markdown は markdown.js
 import { icons } from "/ui/js/icons.js";
 
-export const OPENS = /\.(pdf|png|jpe?g|jpe|jfif|gif|webp|bmp|tiff?|md|markdown|txt|text|rtf)$/i;
+export const OPENS = /\.(pdf|png|jpe?g|jpe|jfif|gif|webp|bmp|tiff?|md|markdown|txt|text|rtf|docx|xlsx|pptx)$/i;
 
 export async function mount(el, ctx) {
   if (ctx.instance) {
     const info = await ctx.call("doc_info", { key: ctx.instance }).catch(() => null);
-    const viewer = await import(info?.kind === "image" ? "./image.js" : ["md", "text", "rtf"].includes(info?.kind) ? "./markdown.js" : "./viewer.js");
+    const viewer = await import(info?.kind === "image" ? "./image.js" : ["md", "text", "rtf"].includes(info?.kind) ? "./markdown.js" : info?.kind === "office" ? "./office.js" : "./viewer.js");
     return viewer.mount(el, ctx);
   }
   const t = ctx.t;
@@ -75,7 +75,7 @@ export async function mount(el, ctx) {
       row.type = "button";
       row.className = d.kind === "image" ? "pdf-row img" : "pdf-row";
       row.disabled = !d.exists;
-      row.innerHTML = `${d.kind === "image" ? icons.image : ["md", "text", "rtf"].includes(d.kind) ? icons.text : icons.pdf}<span class="pdf-row-text"><span class="pdf-row-name"></span><span class="pdf-row-folder"></span></span>`;
+      row.innerHTML = `${d.kind === "image" ? icons.image : ["md", "text", "rtf", "office"].includes(d.kind) ? icons.text : icons.pdf}<span class="pdf-row-text"><span class="pdf-row-name"></span><span class="pdf-row-folder"></span></span>`;
       row.querySelector(".pdf-row-name").textContent = d.name;
       row.querySelector(".pdf-row-folder").textContent = d.exists ? d.folder : t("pdf.missing");
       row.title = `${d.folder}\\${d.name}`;

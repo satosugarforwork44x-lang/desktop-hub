@@ -82,3 +82,22 @@
 .ink-width::after { content: ""; width: 16px; height: var(--w); border-radius: 99px; background: var(--text); }
 .ink-color[aria-pressed="true"], .ink-width[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--signal); }
 .md-w[hidden], .md-mode[hidden] { display: none; }   /* .icon-btn / .btn の display より優先 */
+/* Office（office.js） */
+.of-scroll { flex: 1; min-height: 0; overflow: auto; }
+.of-docx { user-select: text; }
+.of-docx .docx-wrapper { background: transparent !important; padding: 24px 16px !important; }
+.of-docx .docx-wrapper > section.docx { box-shadow: 0 2px 14px rgba(0, 0, 0, .3) !important; margin-bottom: 24px !important; }
+.of-note { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--tint); font-size: 12.5px; color: var(--text); }
+.of-note .icon, .of-note svg { width: 16px; height: 16px; flex: none; color: var(--signal); }
+.of-table { overflow-x: auto; margin: 0 0 var(--lh); }
+.of-table table { border-collapse: collapse; font-size: .92em; }
+.of-table td { padding: 4px 10px; border: 1px solid var(--line); white-space: nowrap; }
+.of-slide { margin: 0 0 18px; padding: 14px 18px; border-radius: var(--r); background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+.of-slide-no { color: var(--faint); font-size: 11.5px; margin-bottom: 6px; }
+.of-slide-body h3 { margin: 0 0 8px; font-size: 1.15em; }
+.of-slide-body p { margin: 0; }
+.of-slide-notes { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); color: var(--muted); font-size: .92em; white-space: pre-wrap; }
+.of-wait { height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--muted); }
+.of-spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--ink-3); border-top-color: var(--signal); animation: of-spin 0.9s linear infinite; }
+@keyframes of-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .of-spin { animation: none; } }

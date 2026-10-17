@@ -91,7 +91,7 @@ class HubServer:
                 "resize_panel": lambda: host.resize_panel(pid, body.get("w", 340), body.get("h", 480)),
                 "panel_state": lambda: host.panel_state(pid),
                 "open_panels": lambda: host.open_panels(),
-                "bar": lambda: host.bar_set(body.get("expanded"), body.get("pinned"), body.get("length")),
+                "bar": lambda: host.bar_set(body.get("expanded"), body.get("pinned"), body.get("length"), body.get("sink")),
                 "open_path": lambda: host.open_path(str(body.get("path", ""))),
                 "reveal_path": lambda: host.reveal_path(str(body.get("path", ""))),
                 "pick_files": lambda: host.pick_files(pid),
