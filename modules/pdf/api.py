@@ -100,26 +100,44 @@ _RTF_SKIP = {"fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "foo
              "rsidtbl", "generator", "object", "filetbl", "revtbl"}
 
 
+_RTF_CHARSET = {0: "cp1252", 77: "mac_roman", 128: "cp932", 129: "cp949", 134: "gbk", 136: "cp950", 161: "cp1253",
+                162: "cp1254", 177: "cp1255", 178: "cp1256", 186: "cp1257", 204: "cp1251", 222: "cp874", 238: "cp1250"}
+
+
 def rtf_to_text(rtf: str) -> str:
     """RTF から文字だけを取り出す（書式は捨てる）。日本語（\\'hh の cp932、\\u の Unicode）にも対応。"""
     import re
     m = re.search(r"\\ansicpg(\d+)", rtf)
     codepage = f"cp{m.group(1)}" if m else "cp932"
+    # フォントごとの文字コード（Mac のテキストエディットは「…」などを欧文フォント＝cp1252 の 1 バイトで書く）
+    fonts: dict[int, str] = {}
+    table = ""
+    if (start := rtf.find("{\\fonttbl")) >= 0:      # フォント表のグループ（{ } の対応で終わりを探す）
+        depth = 0
+        for j in range(start, min(len(rtf), start + 200_000)):
+            depth += {"{": 1, "}": -1}.get(rtf[j], 0)
+            if depth == 0:
+                table = rtf[start:j]
+                break
+    for fm in re.finditer(r"\\f(\d+)[^;]*?\\fcharset(\d+)", table):
+        cp = _RTF_CHARSET.get(int(fm.group(2)))
+        if cp:
+            fonts[int(fm.group(1))] = cp
     out: list[str] = []
     pend = bytearray()                       # \'hh を貯めて、まとめて文字にする（2 バイト文字のため）
-    stack: list[tuple[bool, int]] = []
-    skip, uc, drop = False, 1, 0
+    stack: list[tuple[bool, int, str]] = []
+    skip, uc, drop, cur = False, 1, 0, codepage
     def flush():
         if pend:
-            out.append(pend.decode(codepage, errors="replace"))
+            out.append(pend.decode(cur, errors="replace"))
             pend.clear()
     i, n = 0, len(rtf)
     while i < n:
         c = rtf[i]
         if c == "{":
-            flush(); stack.append((skip, uc)); i += 1
+            flush(); stack.append((skip, uc, cur)); i += 1
         elif c == "}":
-            flush(); skip, uc = stack.pop() if stack else (False, 1); i += 1
+            flush(); skip, uc, cur = stack.pop() if stack else (False, 1, codepage); i += 1
         elif c == "\\":
             if i + 1 < n and rtf[i + 1] in "\\{}":
                 flush(); drop = 0
@@ -141,6 +159,8 @@ def rtf_to_text(rtf: str) -> str:
                 skip = True
             elif word == "uc":
                 uc = int(arg or 1)
+            elif word == "f" and arg is not None:
+                cur = fonts.get(int(arg), codepage)
             elif word == "u" and not skip:
                 v = int(arg); out.append(chr(v + 65536 if v < 0 else v)); drop = uc
             elif not skip and word in ("par", "line", "sect", "row"):
@@ -210,8 +230,65 @@ def read_text(key: str) -> dict:
     text, enc = _decode(p.read_bytes())
     if kind == "rtf":
         text = rtf_to_text(text)
-    return {"text": text, "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p), "kind": kind,
-            "encoding": enc, "writable": p.suffix.lower() in WRITABLE}
+    out = {"text": text, "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p), "kind": kind,
+           "encoding": enc, "writable": p.suffix.lower() in WRITABLE}
+    if kind == "rtf":
+        out["rtfEdit"] = rtf_editor()
+    return out
+
+
+# ---------- RTF を直す ----------
+# Hub は RTF を文字だけで見せるので、そのまま保存すると書式が消える。書式付きで直せるアプリがあればそれで開き、
+# 無ければ（WordPad は Windows 11 の新しい版で無くなった）txt の写しを作って Hub の中で書く。元の rtf は変えない
+def _rtf_assoc() -> str:
+    """.rtf の関連付け（ProgID）。Windows 以外・読めないときは空。"""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, ".rtf") as k:
+            return str(winreg.QueryValue(k, None) or "")
+    except (ImportError, OSError):
+        return ""
+
+
+def rtf_editor() -> str:
+    """rtf を直す手段: "libreoffice" / "word" / "txt"（どちらも無ければ txt の写しを書く）。"""
+    if _soffice():
+        return "libreoffice"
+    if _rtf_assoc().lower().startswith("word."):
+        return "word"
+    return "txt"
+
+
+def _free_name(p: Path) -> Path:
+    """同じ名前があれば「名前 (2).txt」のようにずらす（上書きしない）。"""
+    if not p.exists():
+        return p
+    n = 2
+    while (q := p.with_name(f"{p.stem} ({n}){p.suffix}")).exists():
+        n += 1
+    return q
+
+
+def rtf_edit(key: str) -> dict:
+    """rtf を直す（利用者がボタンを押したときだけ）。アプリで開くか、txt の写しを作ってその path を返す。"""
+    p = _path_of(key)
+    if _kind(p) != "rtf":
+        raise PdfError("rtf のファイルではない")
+    how = rtf_editor()
+    if how == "libreoffice":
+        subprocess.Popen([str(_soffice()), "--writer", "--norestore", str(p)],
+                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        return {"mode": how}
+    if how == "word":
+        os.startfile(str(p))                # .rtf の関連付け（Word）で開く
+        return {"mode": how}
+    text, _ = _decode(p.read_bytes())
+    body = rtf_to_text(text).replace("\r\n", "\n")
+    if os.name == "nt":
+        body = body.replace("\n", "\r\n")
+    q = _free_name(p.with_suffix(".txt"))
+    q.write_bytes(body.encode("utf-8-sig"))   # メモ帳でもそのまま開ける形
+    return {"mode": how, "path": str(q)}
 
 
 def write_text(key: str, text: str, base_mtime: float) -> dict:

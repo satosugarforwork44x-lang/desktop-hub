@@ -1217,6 +1217,35 @@ class TextNoteTest(HubTestBase):
         with self.assertRaises(ModuleError):
             self.registry.call("pdf", "write_text", {"key": k, "text": "x", "base_mtime": r["mtime"]})
 
+    def test_rtf_font_charsets(self):
+        """Mac のテキストエディット: 「…」は欧文フォント（fcharset0 = cp1252）の 1 バイトで書かれる（0.12.1）。"""
+        rtf = ("{\\rtf1\\ansi\\ansicpg932{\\fonttbl\\f0\\fnil\\fcharset128 Hira;\\f1\\fswiss\\fcharset0 Helvetica;}\n"
+               "\\f0 \\'82\\'53\n\\f1 \\'85\n\\f0 \\'82\\'52{\\f1 \\'85}\\'82\\'51\\par}")
+        k, _ = self._open("mac.rtf", rtf.encode("ascii"))
+        self.assertEqual(self.registry.call("pdf", "read_text", {"key": k})["text"], "４…３…２\n")
+
+    def test_rtf_edit_makes_txt_copy(self):
+        from unittest import mock
+        pdf_api = self.registry.modules["pdf"].api
+        rtf = "{\\rtf1\\ansi\\ansicpg932\\f0 \\'82\\'a0\\par}"
+        k, p = self._open("d.rtf", rtf.encode("ascii"))
+        (p.with_suffix(".txt")).write_text("既にある", encoding="utf-8")
+        with mock.patch.object(pdf_api, "_soffice", return_value=None), mock.patch.object(pdf_api, "_rtf_assoc", return_value=""):
+            self.assertEqual(self.registry.call("pdf", "read_text", {"key": k})["rtfEdit"], "txt")
+            r = self.registry.call("pdf", "rtf_edit", {"key": k})
+        self.assertEqual(Path(r["path"]).name, "d (2).txt")                      # 上書きしない
+        self.assertEqual(p.with_suffix(".txt").read_text(encoding="utf-8"), "既にある")
+        self.assertEqual(Path(r["path"]).read_text(encoding="utf-8-sig").strip(), "あ")
+        self.assertTrue(p.exists())                                               # 元の rtf は残す
+        with mock.patch.object(pdf_api, "_soffice", return_value=None), mock.patch.object(pdf_api, "_rtf_assoc", return_value="Word.RTF.8"):
+            self.assertEqual(pdf_api.rtf_editor(), "word")
+
+    def test_grid_paper_closes_edges(self):
+        css = (ROOT / "modules" / "pdf" / "ui" / "markdown.css").read_text(encoding="utf-8")
+        self.assertIn("round(down", css)
+        js = (ROOT / "modules" / "pdf" / "ui" / "markdown.js").read_text(encoding="utf-8")
+        self.assertIn('doc.kind !== "md"', js)                                    # txt では写真・手書きを出さない
+
     def test_write_keeps_encoding_and_detects_conflict(self):
         import os
         import time

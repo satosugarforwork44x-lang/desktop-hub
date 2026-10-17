@@ -12,11 +12,23 @@
   background-image: linear-gradient(to bottom, transparent calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px));
   background-size: 100% var(--lh);
 }
+/* 方眼: 線はマスの左と上に引き、紙の幅と高さをマスの整数倍 + 1px にする → 右端・下端もマスの線で閉じる
+   （round() が使えない古い WebView2 では幅の指定が無視され、今までどおりの見た目になる） */
 .md-body[data-paper="grid"] {
+  --pad-x: 28px; --pad-y: 67px;                         /* 左右の余白の合計 56px / 上下 20 + 47px */
+  width: calc(round(down, min(100%, 820px) - var(--pad-x) * 2, var(--lh)) + var(--pad-x) * 2 + 1px);
+  min-height: calc(round(down, 100% - var(--pad-y) - 1px, var(--lh)) + var(--pad-y) + 1px);
+  padding-bottom: 47px;
   background-image:
-    linear-gradient(to bottom, transparent calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px)),
-    linear-gradient(to right, transparent calc(var(--lh) - 1px), var(--line) calc(var(--lh) - 1px));
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px);
   background-size: var(--lh) var(--lh);
+  background-clip: content-box;
+}
+.md-body[data-paper="grid"]::after { content: ""; display: block; height: 1px; }   /* 下端の線の分 */
+/* 罫線・方眼の間隔を整数の px にする（25.2px のような端数だと、線ごとに濃さがばらつく） */
+@supports (width: round(1px, 1px)) {
+  .md-body[data-paper="lined"], .md-body[data-paper="grid"] { --lh: round(calc(14px * var(--md-scale) * 1.8), 1px); }
 }
 .md-body[data-paper="lined"], .md-body[data-paper="grid"] { --line: color-mix(in srgb, var(--signal) 22%, transparent); }
 .md-plain { white-space: pre-wrap; margin: 0; }
@@ -81,7 +93,7 @@
 :root:not([data-mode="light"]) .ink-color::after { filter: invert(1) hue-rotate(180deg); }
 .ink-width::after { content: ""; width: 16px; height: var(--w); border-radius: 99px; background: var(--text); }
 .ink-color[aria-pressed="true"], .ink-width[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--signal); }
-.md-w[hidden], .md-mode[hidden] { display: none; }   /* .icon-btn / .btn の display より優先 */
+.md-w[hidden], .md-mode[hidden], .md-rtf[hidden] { display: none; }   /* .icon-btn / .btn の display より優先 */
 /* Office（office.js） */
 .of-scroll { flex: 1; min-height: 0; overflow: auto; }
 .of-docx { user-select: text; }

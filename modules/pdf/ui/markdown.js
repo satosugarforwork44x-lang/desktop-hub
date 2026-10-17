@@ -83,6 +83,7 @@ export async function mount(el, ctx) {
         <button class="icon-btn md-w" data-a="photo" hidden></button>
         <button class="icon-btn md-w" data-a="ink" hidden></button>
         <button class="btn md-mode" data-a="mode" hidden></button>
+        <button class="btn md-rtf" data-a="rtf" hidden></button>
         <button class="icon-btn" data-a="edit"></button>
         <button class="icon-btn" data-a="reveal"></button>
       </div>
@@ -156,6 +157,12 @@ export async function mount(el, ctx) {
     }
     applyPaper(store.get(paperKey(), store.get("hub.md.paper", "plain")));
     modeBtn.hidden = !doc.writable;
+    const rtfBtn = $('[data-a="rtf"]');
+    rtfBtn.hidden = doc.kind !== "rtf";
+    if (doc.rtfEdit) {
+      rtfBtn.textContent = t(`md.rtf.${doc.rtfEdit}`);
+      rtfBtn.title = t(`md.rtf.${doc.rtfEdit}Tip`);
+    }
     if (writing) { editor.value = doc.text; dirty = false; setState(""); }
     else renderRead();
     ctx.setStatus(doc.path);
@@ -176,7 +183,7 @@ export async function mount(el, ctx) {
     if (!on && dirty) save();
     writing = on;
     el.querySelector(".pv").classList.toggle("writing", on);
-    for (const b of el.querySelectorAll(".md-w")) b.hidden = !on;
+    for (const b of el.querySelectorAll(".md-w")) b.hidden = !on || doc.kind !== "md";   // 写真・手書きは md だけ
     modeBtn.textContent = on ? t("md.read") : t("md.write");
     modeBtn.classList.toggle("primary", !on);
     if (on) {
@@ -221,6 +228,16 @@ export async function mount(el, ctx) {
   $('[data-a="theirs"]').addEventListener("click", async () => { $(".md-conflict").hidden = true; dirty = false; await load(true); });
   $('[data-a="mine"]').addEventListener("click", async () => { $(".md-conflict").hidden = true; dirty = true; await save(true); });
   modeBtn.addEventListener("click", () => setMode(!writing));
+  // rtf を直す: LibreOffice / Word があればそれで開く。無ければ txt の写しを作って、新しい窓で開く（元の rtf は変えない）
+  $('[data-a="rtf"]').addEventListener("click", async () => {
+    try {
+      const r = await ctx.call("rtf_edit", { key });
+      if (r.mode !== "txt") return ctx.toast(t(`md.rtf.opened`), "info", 4000);
+      const w = await ctx.host.openFile(r.path);
+      if (!ctx.isNative() && w?.url) window.open(w.url, w.id, "width=880,height=1000");
+      ctx.toast(t("md.rtf.copied", { name: r.path.split(/[\\/]/).pop() }), "info", 6000);
+    } catch (e) { ctx.toast(e.message, "error", 6000); }
+  });
 
   // ---- 写真・手書き（md だけ。txt には絵を入れられないので案内する） ----
   function insertAtCaret(md) {

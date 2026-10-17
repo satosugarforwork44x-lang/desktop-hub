@@ -115,6 +115,10 @@
     {
       "fn": "office_to_pdf",
       "summary": "LibreOffice で PDF にして開く"
+    },
+    {
+      "fn": "rtf_edit",
+      "summary": "rtf を直す（LibreOffice / Word で開く。無ければ txt の写しを作る）"
     }
   ],
   "actions": [
