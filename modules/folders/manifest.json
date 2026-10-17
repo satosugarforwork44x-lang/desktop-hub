@@ -79,6 +79,10 @@
     {
       "fn": "write_text",
       "summary": "テキストファイルを書く"
+    },
+    {
+      "fn": "adopt_folders",
+      "summary": "ほかの場所のフォルダを移してフォルダ窓にする（一覧の窓へのドロップ）"
     }
   ],
   "locales": {

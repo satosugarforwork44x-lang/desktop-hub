@@ -1153,3 +1153,39 @@ class ReopenCollapsedTest(HubTestBase):
         self.host.open_panel("folders:WIP")                       # 次に開くとき（再起動後の復元も同じ）
         self.assertFalse(self.host.panel_state("folders:WIP")["collapsed"])
         self.assertGreater(self.host.backend.windows["folders:WIP"]["geom"][3], PANEL_HEADER_H)
+
+
+class FolderDropTest(HubTestBase):
+    """エクスプローラーからのドロップ（0.10.6）: フォルダを中身でなくフォルダごと、落とした場所へ。"""
+
+    def _ext_folder(self, name="外のフォルダ"):
+        d = self.outside / name
+        (d / "sub").mkdir(parents=True)
+        (d / "a.txt").write_text("a")
+        (d / "sub" / "b.txt").write_text("b")
+        return d
+
+    def test_folder_moves_as_folder_into_subfolder(self):
+        d = self._ext_folder()
+        # 画面部品が中のファイルだけを渡してきた場合でも、項目名からフォルダに戻す
+        r = self.call("move_in", registry="WIP", paths=[str(d / "a.txt"), str(d / "sub" / "b.txt")],
+                      dest_rel="sub", names=["外のフォルダ"])
+        self.assertEqual(r["moved"], ["外のフォルダ"])
+        self.assertTrue((self.reg_root / "WIP" / "sub" / "外のフォルダ" / "sub" / "b.txt").exists())
+        self.assertEqual((self.reg_root / "WIP" / "a.txt").read_text(), "a")   # 元からある a.txt はそのまま
+        self.assertFalse(d.exists())
+
+    def test_files_without_names_move_as_before(self):
+        f = self.outside / "c.txt"
+        f.write_text("c")
+        self.call("move_in", registry="WIP", paths=[str(f)], dest_rel="sub")
+        self.assertTrue((self.reg_root / "WIP" / "sub" / "c.txt").exists())
+
+    def test_adopt_folder_becomes_panel(self):
+        d = self._ext_folder("資料")
+        r = self.call("adopt_folders", paths=[str(d / "a.txt")], names=["資料"])
+        self.assertEqual(r["added"], ["資料"])
+        self.assertIn("資料", [i["id"] for i in self.call("instances")])
+        f = self.outside / "x.txt"
+        f.write_text("x")
+        self.assertTrue(self.call("adopt_folders", paths=[str(f)], names=["x.txt"])["errors"])   # ファイルは不可

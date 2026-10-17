@@ -1,6 +1,12 @@
 // folders/ui/panel.js — フォルダ窓（1レジストリ = 1窓）の中身
 import { icons, fileIcon } from "/ui/js/icons.js";
 
+// 落とされた「いちばん上の項目」の名前（フォルダを中身でなくフォルダごと取り込むための手がかり）
+const droppedNames = (dt) => {
+  const names = [...(dt.items || [])].map((i) => i.webkitGetAsEntry?.()?.name).filter(Boolean);
+  return names.length ? names : [...(dt.files || [])].map((f) => f.name);
+};
+
 // Hub の中で開く種類（ダブルクリック・Enter）。PDF や画像は利用者が選んだアプリのままにする
 const IN_HUB = /\.(md|markdown)$/i;
 
@@ -237,13 +243,28 @@ export async function mount(el, ctx) {
       if (rels.length) await run(() => ctx.call("move_within", { registry: reg, rels, dest_rel: dest }), t("folders.moved"));
       return;
     }
-    // 外からのドロップ: フルパスは直後に ctx.onNativeDrop で届くので、落とした場所を覚えておく
+    // 外からのドロップ: フルパスは別の道（ctx.onNativeDrop）で届く。届く順番は決まっていないので、
+    // 落とした場所と項目の名前（フォルダかどうかも）をここで控え、パスと揃ったところで取り込む
+    const names = droppedNames(e.dataTransfer);
+    pendingDrop = { dest, names };
+    if (!ctx.isNative()) { ctx.toast(t("folders.browserDrop"), "error", 4500); pendingDrop = null; return; }
+    flushNative();
+  });
+  let pendingDrop = null, pendingPaths = null, nativeTimer = null;
+  function flushNative() {
+    if (!pendingPaths) return;
+    if (!pendingDrop) {                            // パスが先に届いた: 画面のドロップを少し待つ
+      clearTimeout(nativeTimer);
+      nativeTimer = setTimeout(() => { pendingDrop = { dest: lastNativeTarget, names: [] }; flushNative(); }, 400);
+      return;
+    }
+    clearTimeout(nativeTimer);
+    const { dest, names } = pendingDrop, paths = pendingPaths;
+    pendingDrop = pendingPaths = null;
     lastNativeTarget = dest;
-    if (!ctx.isNative()) ctx.toast(t("folders.browserDrop"), "error", 4500);
-  });
-  ctx.onNativeDrop((paths) => {
-    run(() => ctx.call("move_in", { registry: reg, paths, dest_rel: lastNativeTarget }), t("folders.imported"));
-  });
+    run(() => ctx.call("move_in", { registry: reg, paths, dest_rel: dest, names }), t("folders.imported"));
+  }
+  ctx.onNativeDrop((paths) => { pendingPaths = paths; flushNative(); });
 
   // ---- 操作 ----
   const err = (e) => ctx.toast(e.message, "error", 5000);
@@ -342,6 +363,27 @@ async function chooser(el, ctx) {
   }
   add.addEventListener("click", create);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) create(); });
+
+  // エクスプローラーからフォルダを落とす → フォルダ窓の置き場所へ移して、新しいフォルダ窓にする
+  let dropNames = null, dropPaths = null;
+  const adopt = async () => {
+    if (!dropNames || !dropPaths) return;
+    const [paths, names] = [dropPaths, dropNames];
+    dropNames = dropPaths = null;
+    try {
+      const r = await ctx.call("adopt_folders", { paths, names });
+      if (r.added.length) ctx.toast(t("folders.adopted", { names: r.added.join("、") }));
+      if (r.errors.length) ctx.toast(r.errors.join("\n"), "error", 6000);
+      await render();
+    } catch (e) { ctx.toast(e.message, "error"); }
+  };
+  el.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropNames = droppedNames(e.dataTransfer);
+    adopt();
+  });
+  ctx.onNativeDrop((paths) => { dropPaths = paths; adopt(); });
 
   async function render() {
     const [list, s] = await Promise.all([ctx.call("instances"), ctx.host.settings()]);

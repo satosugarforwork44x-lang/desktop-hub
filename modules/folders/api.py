@@ -126,6 +126,33 @@ def create_registry(name: str) -> dict:
     return {"id": name}
 
 
+def adopt_folders(paths: list[str], names: list[str] | None = None) -> dict:
+    """フォルダの一覧の窓にエクスプローラーからフォルダを落としたとき: そのフォルダをフォルダ窓の置き場所へ移し、
+    新しいフォルダ窓にする（ほかの場所にあるフォルダをバーから使えるように）。ファイルは受け取らない。"""
+    root = _root()
+    added, errors = [], []
+    for raw in _top_level(paths, names):
+        src = Path(raw)
+        if not src.is_dir():
+            errors.append(f"{src.name}: フォルダだけを登録できます")
+            continue
+        if src.name.startswith(("_", ".")):
+            errors.append(f"{src.name}: 先頭が _ . の名前はフォルダ窓にできません")
+            continue
+        try:
+            root.resolve().relative_to(src.resolve())
+            errors.append(f"{src.name}: フォルダ窓の置き場所を含むフォルダは移せません")
+            continue
+        except ValueError:
+            pass
+        try:
+            dest = _move(src, root)
+            added.append(dest.name)
+        except (FolderError, OSError) as e:
+            errors.append(f"{src.name}: {e}")
+    return {"added": added, "errors": errors}
+
+
 def list_dir(registry: str, rel: str = "") -> dict:
     """フォルダの中身（1階層だけ。開いたときに読み込む）。フォルダが先、名前順。"""
     d = _inside(registry, rel)
@@ -146,8 +173,28 @@ def list_dir(registry: str, rel: str = "") -> dict:
             "undo": len(_ctx.store.get("history", registry, []))}
 
 
-def move_in(registry: str, paths: list[str], dest_rel: str = "") -> dict:
-    """外（エクスプローラー等）からドロップされたファイル・フォルダを移動して取り込む。"""
+def _top_level(paths: list[str], names: list[str] | None) -> list[str]:
+    """ドロップされた「いちばん上の項目」のパスに直す。
+    Windows の画面部品（WebView2）は、フォルダを落とすとフォルダではなく中のファイルを渡すことがある。
+    そのままだと中身だけがばらばらに移るので、画面側で分かる項目名（names）を手がかりに、そのフォルダ自身に戻す。"""
+    if not names:
+        return list(paths or [])
+    want = set(names)
+    out: list[str] = []
+    for raw in paths or []:
+        p = Path(raw)
+        hit = next((a for a in [p, *p.parents] if a.name in want), None)
+        cand = str(hit) if hit is not None else str(p)
+        if cand not in out:
+            out.append(cand)
+    # ほかの項目の中にあるもの（フォルダとその中身の両方が届いたとき）は除く
+    return [c for c in out if not any(c != o and Path(c).is_relative_to(o) for o in out)]
+
+
+def move_in(registry: str, paths: list[str], dest_rel: str = "", names: list[str] | None = None) -> dict:
+    """外（エクスプローラー等）からドロップされたファイル・フォルダを移動して取り込む。
+    names: 画面で分かった「落とした項目の名前」（フォルダを中身でなくフォルダごと移すため）。"""
+    paths = _top_level(paths, names)
     dest_dir = _inside(registry, dest_rel)
     if not dest_dir.is_dir():
         dest_dir = dest_dir.parent  # ファイル行に落とした場合はそのファイルのあるフォルダへ
