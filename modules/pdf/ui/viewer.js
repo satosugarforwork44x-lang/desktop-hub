@@ -478,9 +478,38 @@ export async function mount(el, ctx) {
   btn("print").addEventListener("click", print);
   btn("more").addEventListener("click", more);
 
+  // ---- 文字のコピー（文字が埋め込まれた PDF だけ。スキャンした PDF は「その他 → 文字にする」で OCR） ----
+  // 日本語の字と字の間に入る余計な空白を取ってからクリップボードへ
+  const CJK = "\\u3000-\\u30ff\\u3400-\\u9fff\\uf900-\\ufaff\\uff00-\\uffef";
+  const tidy = (s) => s.replace(new RegExp(`(?<=[${CJK}]) +(?=[${CJK}])`, "g"), "");
+  const selectedText = () => {
+    const sel = getSelection();
+    return sel && !sel.isCollapsed && scroller.contains(sel.anchorNode) ? tidy(sel.toString()) : "";
+  };
+  document.addEventListener("copy", (e) => {
+    const s = selectedText();
+    if (!s) return;
+    e.preventDefault();
+    e.clipboardData.setData("text/plain", s);
+  });
+  scroller.addEventListener("contextmenu", (e) => {
+    const s = selectedText();
+    if (!s) return;
+    e.preventDefault();
+    ctx.contextMenu([{ label: t("set.copy"), icon: icons.copy || icons.text, onClick: async () => {
+      try { await navigator.clipboard.writeText(s); ctx.toast(t("web.copied")); } catch { document.execCommand("copy"); }
+    } }], e.clientX, e.clientY);
+  });
+
   document.addEventListener("keydown", (e) => {
     const typing = e.target.matches?.("input, textarea");
     const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === "a" && !typing) {        // Ctrl+A: 今のページの文字をすべて選ぶ（画面のボタンなどは選ばない）
+      e.preventDefault();
+      const tl = pageDivs[current - 1]?.querySelector(".textLayer");
+      if (tl?.childNodes.length) getSelection().selectAllChildren(tl);
+      return;
+    }
     if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); search.focus(); search.select(); return; }
     if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); print(); return; }
     if (mod && (e.key === "+" || e.key === "=" || e.key === ";")) { e.preventDefault(); step(1); return; }
