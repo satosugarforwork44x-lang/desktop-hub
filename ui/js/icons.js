@@ -71,6 +71,11 @@ export const icons = {
   waveform: svg('<path d="M3 12h2M7 8v8M11 4v16M15 7v10M19 10v4"/>'),
   transcript: svg('<path d="M6 3.5h8l4 4V20a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 20z"/><path d="M14 3.5V8h4"/><path d="M9 12.5h6M9 15.5h6M9 18h3.5"/>'),
   voiceMemo: svg('<rect x="3.5" y="5" width="17" height="14" rx="3"/><path d="M8 10v4M11 8.5v7M14 10.5v3M17 9.5v5"/>'),
+  // 学術（拡張「Lab Sketch」用。使わなければそのまま）
+  flask: svg('<path d="M9.5 3.5h5M10.5 3.5v5.2L5.2 18a1.6 1.6 0 0 0 1.4 2.5h10.8a1.6 1.6 0 0 0 1.4-2.5l-5.3-9.3V3.5"/><path d="M7.6 14.5h8.8"/>'),
+  bookOpen: svg('<path d="M12 6.5c-1.8-1.4-4.3-2-8-2v13c3.7 0 6.2.6 8 2 1.8-1.4 4.3-2 8-2v-13c-3.7 0-6.2.6-8 2z"/><path d="M12 6.5v13"/>'),
+  sigma: svg('<path d="M17.5 5h-11l6 7-6 7h11"/>'),
+  verify: svg('<path d="M12 3.5 19 6v5.5c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="m8.8 12.2 2.2 2.2 4.3-4.6"/>'),
   globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'),
   gauge: svg('<path d="M4.5 18a8.5 8.5 0 1 1 15 0"/><path d="m12 13.5 4-4.5"/><circle cx="12" cy="13.5" r="1.3" fill="currentColor"/>'),
   window: svg('<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 8.5h18"/>'),
