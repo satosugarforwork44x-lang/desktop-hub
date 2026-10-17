@@ -275,6 +275,16 @@ def make_folder(registry: str, rel: str = "", name: str = "新しいフォルダ
     return {"rel": _rel(registry, d)}
 
 
+def new_note(registry: str, rel: str = "") -> dict:
+    """その場所に空のメモ（メモ 2026-10-17.md）を作る。開いて書くのは Hub のビューア。"""
+    parent = _inside(registry, rel)
+    if not parent.is_dir():
+        parent = parent.parent
+    p = _unique(parent / f"メモ {time.strftime('%Y-%m-%d')}.md")
+    p.write_text("", encoding="utf-8")
+    return {"rel": _rel(registry, p), "path": str(p)}
+
+
 def trash(registry: str, rels: list[str]) -> dict:
     """ごみ箱へ送る。send2trash が無い環境では root/_to_delete へ移す（完全削除はしない）。"""
     done, errors = [], []

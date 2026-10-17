@@ -29,8 +29,11 @@ _ctx = None
 RECENT_MAX = 30
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".gif", ".webp", ".bmp", ".tif", ".tiff"}
 MD_EXTS = {".md", ".markdown"}
-MD_MAX_BYTES = 5 * 1024 * 1024          # これより大きい md は読まない（表示が重くなる）
-DOC_EXTS = {".pdf"} | IMAGE_EXTS | MD_EXTS
+TEXT_EXTS = {".txt", ".text"}
+RTF_EXTS = {".rtf"}
+MD_MAX_BYTES = 5 * 1024 * 1024          # これより大きい文章は読まない（表示が重くなる）
+DOC_EXTS = {".pdf"} | IMAGE_EXTS | MD_EXTS | TEXT_EXTS | RTF_EXTS
+WRITABLE = MD_EXTS | TEXT_EXTS          # 「書く」で直せる種類（rtf は書式を壊すので読むだけ）
 NEEDS_PNG = {".tif", ".tiff"}          # WebView2 で直接表示できない形式
 
 
@@ -64,7 +67,93 @@ def _path_of(key: str) -> Path:
 
 def _kind(p: Path) -> str:
     ext = p.suffix.lower()
-    return "pdf" if ext == ".pdf" else "md" if ext in MD_EXTS else "image"
+    if ext == ".pdf":
+        return "pdf"
+    if ext in MD_EXTS:
+        return "md"
+    if ext in TEXT_EXTS:
+        return "text"
+    if ext in RTF_EXTS:
+        return "rtf"
+    return "image"
+
+
+def _decode(raw: bytes) -> tuple[str, str]:
+    """(文字, 文字コード)。メモ帳の保存形式（UTF-8・BOM 付き・UTF-16・日本語の Windows の cp932）を見分ける。"""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return raw.decode("utf-16"), "utf-16"
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw[3:].decode("utf-8", errors="replace"), "utf-8-sig"
+    for enc in ("utf-8", "cp932"):
+        try:
+            return raw.decode(enc), enc
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace"), "utf-8"
+
+
+_RTF_SKIP = {"fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "footer", "listtable",
+             "listoverridetable", "themedata", "colorschememapping", "latentstyles", "datastore", "xmlnstbl",
+             "rsidtbl", "generator", "object", "filetbl", "revtbl"}
+
+
+def rtf_to_text(rtf: str) -> str:
+    """RTF から文字だけを取り出す（書式は捨てる）。日本語（\\'hh の cp932、\\u の Unicode）にも対応。"""
+    import re
+    m = re.search(r"\\ansicpg(\d+)", rtf)
+    codepage = f"cp{m.group(1)}" if m else "cp932"
+    out: list[str] = []
+    pend = bytearray()                       # \'hh を貯めて、まとめて文字にする（2 バイト文字のため）
+    stack: list[tuple[bool, int]] = []
+    skip, uc, drop = False, 1, 0
+    def flush():
+        if pend:
+            out.append(pend.decode(codepage, errors="replace"))
+            pend.clear()
+    i, n = 0, len(rtf)
+    while i < n:
+        c = rtf[i]
+        if c == "{":
+            flush(); stack.append((skip, uc)); i += 1
+        elif c == "}":
+            flush(); skip, uc = stack.pop() if stack else (False, 1); i += 1
+        elif c == "\\":
+            if i + 1 < n and rtf[i + 1] in "\\{}":
+                flush(); drop = 0
+                if not skip: out.append(rtf[i + 1])
+                i += 2; continue
+            if i + 1 < n and rtf[i + 1] == "'":
+                if drop: drop -= 1
+                elif not skip: pend += bytes([int(rtf[i + 2:i + 4], 16)])
+                i += 4; continue
+            if i + 1 < n and rtf[i + 1] == "*":
+                skip = True; i += 2; continue
+            m = re.match(r"\\([a-zA-Z]+)(-?\d+)? ?", rtf[i:])
+            if not m:
+                i += 2; continue
+            word, arg = m.group(1), m.group(2)
+            i += m.end()
+            flush()
+            if word in _RTF_SKIP:
+                skip = True
+            elif word == "uc":
+                uc = int(arg or 1)
+            elif word == "u" and not skip:
+                v = int(arg); out.append(chr(v + 65536 if v < 0 else v)); drop = uc
+            elif not skip and word in ("par", "line", "sect", "row"):
+                out.append("\n")
+            elif not skip and word == "tab":
+                out.append("\t")
+        elif c in "\r\n":
+            i += 1
+        else:
+            if drop:
+                drop -= 1
+            elif not skip:
+                flush(); out.append(c)
+            i += 1
+    flush()
+    return re.sub(r"\n{3,}", "\n\n", "".join(out)).strip() + "\n"
 
 
 def _register(p: Path) -> str:
@@ -105,20 +194,44 @@ def neighbor(key: str, step: int = 1) -> dict:
 
 
 def read_text(key: str) -> dict:
-    """Markdown の中身（表示は画面の markdown.js）。文字コードは UTF-8 → 日本語の Windows（cp932）の順に試す。"""
+    """Markdown・テキスト・RTF の中身（表示は画面の markdown.js）。RTF は文字だけにする。"""
     p = _path_of(key)
-    if _kind(p) != "md":
-        raise PdfError("Markdown ではない")
+    kind = _kind(p)
+    if kind not in ("md", "text", "rtf"):
+        raise PdfError("文章のファイルではない")
     st = p.stat()
     if st.st_size > MD_MAX_BYTES:
         raise PdfError(f"大きすぎて表示できない（{MD_MAX_BYTES // 1048576}MB まで）")
+    text, enc = _decode(p.read_bytes())
+    if kind == "rtf":
+        text = rtf_to_text(text)
+    return {"text": text, "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p), "kind": kind,
+            "encoding": enc, "writable": p.suffix.lower() in WRITABLE}
+
+
+def write_text(key: str, text: str, base_mtime: float) -> dict:
+    """「書く」で直した文章を保存する。読んだ後に外で書き換えられていたら（Claude など）上書きせずに知らせる。
+    文字コードと改行は元のファイルに合わせる（メモ帳で作った cp932 の txt を UTF-8 に変えてしまわない）。"""
+    p = _path_of(key)
+    if p.suffix.lower() not in WRITABLE:
+        raise PdfError("この種類のファイルは書き換えられない")
+    st = p.stat()
+    if abs(st.st_mtime - float(base_mtime)) > 1e-3:
+        return {"conflict": True, "mtime": st.st_mtime}
     raw = p.read_bytes()
-    for enc in ("utf-8-sig", "cp932"):
-        try:
-            return {"text": raw.decode(enc), "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p)}
-        except UnicodeDecodeError:
-            continue
-    return {"text": raw.decode("utf-8", errors="replace"), "mtime": st.st_mtime, "folder": str(p.parent), "path": str(p)}
+    _, enc = _decode(raw)
+    crlf = b"\r\n" in raw or (not raw and os.name == "nt")
+    body = (text or "").replace("\r\n", "\n")
+    if crlf:
+        body = body.replace("\n", "\r\n")
+    try:
+        data = body.encode(enc)
+    except UnicodeEncodeError:            # cp932 にない字（絵文字など）を書いたら UTF-8（BOM 付き）にする
+        enc, data = "utf-8-sig", body.encode("utf-8-sig")
+    tmp = p.with_name(f".{p.name}.hubtmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, p)
+    return {"conflict": False, "mtime": p.stat().st_mtime, "encoding": enc}
 
 
 def mtime(key: str) -> float:
@@ -137,10 +250,52 @@ def instance_title(key: str) -> str:
     return f"{d['name']} — Hub" if d else "Hub"
 
 
+ASSET_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+ASSET_MAX = 30 * 1024 * 1024
+
+
+def _asset_of(md: Path, rel: str) -> Path:
+    """md から見た相対パスの画像（写真・手書き）。md のあるフォルダの外・画像以外は渡さない。"""
+    base = md.parent.resolve()
+    p = (base / rel).resolve()
+    if not p.is_relative_to(base) or p.suffix.lower() not in ASSET_EXTS or not p.is_file():
+        raise PdfError("表示できない画像")
+    return p
+
+
+def save_asset(data: bytes, key: str, ext: str = "png", kind: str = "img") -> dict:
+    """メモに貼った写真・手書きを、md の横の「<名前>_files」フォルダに保存する（/upload/pdf/save_asset）。
+    返す rel を md に ![](rel) で書く。保存先は Hub が決める（画面からパスは受け取らない）。"""
+    md = _path_of(key)
+    if md.suffix.lower() not in MD_EXTS:
+        raise PdfError("写真と手書きは Markdown（.md）のメモで使えます")
+    ext = "." + str(ext).lower().lstrip(".")
+    if ext not in ASSET_EXTS:
+        raise PdfError("貼れるのは png / jpg / gif / webp / svg の画像だけ")
+    if len(data) > ASSET_MAX:
+        raise PdfError(f"画像が大きすぎる（{ASSET_MAX // 1048576}MB まで）")
+    if ext == ".svg":
+        head = data[:4096].lower()
+        if not head.lstrip().startswith((b"<svg", b"<?xml")) or b"<script" in data.lower():
+            raise PdfError("手書きの形式が正しくない")
+    d = md.parent / f"{md.stem}_files"
+    d.mkdir(exist_ok=True)
+    prefix = "ink" if kind == "ink" else "img"
+    name = f"{prefix}-{time.strftime('%Y%m%d-%H%M%S')}{ext}"
+    p, i = d / name, 2
+    while p.exists():
+        p, i = d / f"{prefix}-{time.strftime('%Y%m%d-%H%M%S')}-{i}{ext}", i + 1
+    p.write_bytes(data)
+    return {"rel": f"{d.name}/{p.name}"}
+
+
 def blob_path(key: str) -> Path:
-    """画面に渡すファイル。server.py の /blob/pdf/<key>（TIFF のページは <key>/<ページ番号>）から呼ばれる。"""
+    """画面に渡すファイル。server.py の /blob/pdf/<key>（TIFF のページは <key>/<ページ番号>、
+    メモの画像は <key>/a/<md から見た相対パス>）から呼ばれる。"""
     key, _, page = key.partition("/")
     p = _path_of(key)
+    if page.startswith("a/"):
+        return _asset_of(p, page[2:])
     if p.suffix.lower() in NEEDS_PNG:
         return _as_png(p, int(page or 1))
     return p
@@ -365,8 +520,8 @@ def association() -> dict:
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, rf"Software\Classes\{PROGID}\shell\open\command") as k:
             cmd = winreg.QueryValueEx(k, "")[0]
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.md\OpenWithProgids") as k:
-            winreg.QueryValueEx(k, PROGID)          # 新しく足した種類（.md）の登録がない（前の版で登録した）なら、登録し直しを促す
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.txt\OpenWithProgids") as k:
+            winreg.QueryValueEx(k, PROGID)          # 新しく足した種類（.txt）の登録がない（前の版で登録した）なら、登録し直しを促す
         return {"supported": True, "registered": True, "current": cmd == _command()}
     except OSError:
         return {"supported": True, "registered": False}

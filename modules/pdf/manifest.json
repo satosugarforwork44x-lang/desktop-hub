@@ -38,9 +38,15 @@
       ".tif",
       ".tiff",
       ".md",
-      ".markdown"
+      ".markdown",
+      ".txt",
+      ".text",
+      ".rtf"
     ],
-    "blob": "blob_path"
+    "blob": "blob_path",
+    "upload": [
+      "save_asset"
+    ]
   },
   "exports": [
     {
@@ -90,6 +96,10 @@
     {
       "fn": "mtime",
       "summary": "ファイルの更新時刻（自動で読み直すため）"
+    },
+    {
+      "fn": "write_text",
+      "summary": "「書く」で直した文章を保存する（外で書き換えられていたら上書きしない）"
     }
   ],
   "actions": [

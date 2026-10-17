@@ -767,8 +767,8 @@ class ViewerImageTest(HubTestBase):
         self.assertTrue(any(w.startswith("pdf:") for w in self.host.backend.windows))
 
     def test_other_files_rejected(self):
-        (self.dir / "x.txt").write_text("x")
-        _, body = self.post("/api/call", {"module": "pdf", "fn": "open_doc", "args": {"path": str(self.dir / "x.txt")}})
+        (self.dir / "x.exe").write_bytes(b"MZ")                    # txt は 0.11 から読める。実行ファイルは開かない
+        _, body = self.post("/api/call", {"module": "pdf", "fn": "open_doc", "args": {"path": str(self.dir / "x.exe")}})
         self.assertFalse(body["ok"])
 
 
@@ -1189,3 +1189,71 @@ class FolderDropTest(HubTestBase):
         f = self.outside / "x.txt"
         f.write_text("x")
         self.assertTrue(self.call("adopt_folders", paths=[str(f)], names=["x.txt"])["errors"])   # ファイルは不可
+
+
+class TextNoteTest(HubTestBase):
+    """ビューアで txt・rtf を読む、md・txt を「書く」（0.11.0）。"""
+
+    def _open(self, name, data: bytes):
+        p = self.reg_root / "WIP" / name
+        p.write_bytes(data)
+        return self.registry.call("pdf", "open_doc", {"path": str(p)})["key"], p
+
+    def test_read_txt_encodings(self):
+        for data, want in ((("メモ帳").encode("cp932"), "メモ帳"), ("﻿BOM付き".encode("utf-8"), "BOM付き"),
+                           ("UTF-16".encode("utf-16"), "UTF-16")):
+            k, _ = self._open("a.txt", data)
+            r = self.registry.call("pdf", "read_text", {"key": k})
+            self.assertEqual((r["text"], r["kind"], r["writable"]), (want, "text", True))
+
+    def test_rtf_text_only_and_read_only(self):
+        u = "\\" + "u12354?"                                         # 「あ」（\\u の Unicode）
+        rtf = ("{\\rtf1\\ansi\\ansicpg932{\\fonttbl{\\f0 MS Mincho;}}{\\*\\generator X;}\\f0 Hello \\b bold\\b0\\par "
+               "\\'82\\'a2" + u + "x\\par}")
+        k, _ = self._open("b.rtf", rtf.encode("ascii"))
+        r = self.registry.call("pdf", "read_text", {"key": k})
+        self.assertEqual(r["text"], "Hello bold\nいあx\n")
+        self.assertFalse(r["writable"])
+        with self.assertRaises(ModuleError):
+            self.registry.call("pdf", "write_text", {"key": k, "text": "x", "base_mtime": r["mtime"]})
+
+    def test_write_keeps_encoding_and_detects_conflict(self):
+        import os
+        import time
+        k, p = self._open("c.txt", "一行目\r\n二行目".encode("cp932"))
+        r = self.registry.call("pdf", "read_text", {"key": k})
+        w = self.registry.call("pdf", "write_text", {"key": k, "text": "直した\n二行目", "base_mtime": r["mtime"]})
+        self.assertFalse(w["conflict"])
+        self.assertEqual(p.read_bytes(), "直した\r\n二行目".encode("cp932"))      # 文字コードと改行はそのまま
+        time.sleep(0.01)
+        p.write_text("Claude が書き換えた", encoding="utf-8")
+        os.utime(p, (time.time() + 5, time.time() + 5))
+        self.assertTrue(self.registry.call("pdf", "write_text", {"key": k, "text": "上書き？", "base_mtime": w["mtime"]})["conflict"])
+        self.assertEqual(p.read_text(encoding="utf-8"), "Claude が書き換えた")   # 上書きしない
+        w2 = self.registry.call("pdf", "write_text", {"key": k, "text": "絵文字🙂", "base_mtime": p.stat().st_mtime})
+        self.assertEqual(p.read_text(encoding="utf-8"), "絵文字🙂")               # cp932 にない字は UTF-8 に
+        self.assertFalse(w2["conflict"])
+
+    def test_new_note(self):
+        r = self.call("new_note", registry="WIP", rel="sub")
+        self.assertTrue(r["rel"].startswith("sub/メモ "))
+        self.assertTrue(r["rel"].endswith(".md"))
+        self.assertTrue((self.reg_root / "WIP" / r["rel"]).exists())
+
+    def test_assets_saved_beside_md_and_served(self):
+        k, p = self._open("note.md", "# メモ\n".encode("utf-8"))
+        api = self.registry.modules["pdf"].api
+        r = self.registry.call_upload("pdf", "save_asset", b"\x89PNG\r\n\x1a\nxx", {"key": k, "ext": "png"})
+        self.assertTrue(r["rel"].startswith("note_files/img-"))
+        self.assertTrue((p.parent / r["rel"]).exists())
+        self.assertEqual(api.blob_path(f"{k}/a/{r['rel']}"), (p.parent / r["rel"]).resolve())
+        svg = b'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>'
+        self.assertTrue(self.registry.call_upload("pdf", "save_asset", svg, {"key": k, "ext": "svg", "kind": "ink"})["rel"].startswith("note_files/ink-"))
+        for bad in (b'<svg><script>alert(1)</script></svg>',):
+            with self.assertRaises(ModuleError):
+                self.registry.call_upload("pdf", "save_asset", bad, {"key": k, "ext": "svg"})
+        with self.assertRaises(Exception):
+            api.blob_path(f"{k}/a/../../a.txt")                    # md のフォルダの外は渡さない
+        kt, _ = self._open("plain.txt", b"x")
+        with self.assertRaises(ModuleError):                        # txt には絵を入れられない
+            self.registry.call_upload("pdf", "save_asset", b"\x89PNG", {"key": kt, "ext": "png"})

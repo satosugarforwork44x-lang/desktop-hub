@@ -83,6 +83,10 @@
     {
       "fn": "adopt_folders",
       "summary": "ほかの場所のフォルダを移してフォルダ窓にする（一覧の窓へのドロップ）"
+    },
+    {
+      "fn": "new_note",
+      "summary": "空のメモ（.md）を作る"
     }
   ],
   "locales": {

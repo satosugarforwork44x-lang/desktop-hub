@@ -8,7 +8,7 @@ const droppedNames = (dt) => {
 };
 
 // Hub の中で開く種類（ダブルクリック・Enter）。PDF や画像は利用者が選んだアプリのままにする
-const IN_HUB = /\.(md|markdown)$/i;
+const IN_HUB = /\.(md|markdown|txt|text|rtf)$/i;
 
 export async function mount(el, ctx) {
   const reg = ctx.instance;
@@ -193,6 +193,7 @@ export async function mount(el, ctx) {
       { label: t("folders.reveal"), icon: icons.reveal, onClick: () => reveal(rel) },
       { label: t("folders.rename"), icon: icons.rename, onClick: () => startRename(rel), disabled: rels.length > 1 },
       { label: t("folders.newFolderIn"), icon: icons.newFolder, onClick: () => newFolder(r.dataset.dir ? rel : parentOf(rel)) },
+      { label: t("folders.newNote"), icon: icons.note, onClick: () => newNote(r.dataset.dir ? rel : parentOf(rel)) },
       // ごみ箱は移動先の一覧より上に置く（フォルダ窓が増えると一覧が伸び、窓の下で見えなくなるため）
       { label: rels.length > 1 ? t("folders.trashN", { n: rels.length }) : t("folders.trash"), icon: icons.trash, danger: true, onClick: () => doTrash(rels) },
       ...(others.length ? ["-", { label: t("folders.moveTo"), heading: true },
@@ -278,6 +279,17 @@ export async function mount(el, ctx) {
       return r;
     } catch (e) { err(e); }
   }
+  // 新しいメモ: その場所に「メモ 日付.md」を作り、Hub の窓で書ける状態で開く
+  async function newNote(rel) {
+    try {
+      const r = await ctx.call("new_note", { registry: reg, rel });
+      try { localStorage.setItem(`hub.md.write:${r.path}`, "1"); } catch { /* 開いてから「書く」を押せばよい */ }
+      await reload();
+      const w = await ctx.host.openFile(r.path);
+      if (!ctx.isNative() && w?.url) window.open(w.url, w.id, "width=760,height=900");
+    } catch (e) { err(e); }
+  }
+
   async function openItem(rel) {
     try {
       const full = await ctx.call("full_path", { registry: reg, rel });
