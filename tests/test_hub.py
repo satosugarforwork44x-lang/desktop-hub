@@ -871,6 +871,52 @@ class ScriptSyntaxTest(unittest.TestCase):
                                capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, f"{f.relative_to(ROOT)}: {r.stderr.strip()[:300]}")
 
+class PdfCompressTest(HubTestBase):
+    """ビューアの「圧縮する」（0.13.0）。PyMuPDF が無ければ飛ばす。"""
+
+    def setUp(self):
+        super().setUp()
+        try:
+            import pymupdf  # noqa: F401
+        except ImportError:
+            self.skipTest("PyMuPDF が無い")
+
+    def _make(self, name, with_image=True):
+        import pymupdf
+        p = self.reg_root / "WIP" / name
+        doc = pymupdf.open()
+        page = doc.new_page(width=595, height=842)
+        page.insert_text((72, 72), "hello")
+        if with_image:
+            import random
+            rnd = random.Random(1)
+            pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 1600, 1600), False)
+            pix.set_rect(pix.irect, (200, 180, 160))
+            for _ in range(4000):                                  # 雑音を入れて、可逆圧縮では縮まない画像にする
+                x, y = rnd.randrange(1580), rnd.randrange(1580)
+                pix.set_rect(pymupdf.IRect(x, y, x + 20, y + 20), (rnd.randrange(256), rnd.randrange(256), rnd.randrange(256)))
+            page.insert_image(pymupdf.Rect(72, 100, 272, 300), pixmap=pix)   # 200pt に 1600px = 576dpi
+        doc.save(p)
+        return self.registry.call("pdf", "open_doc", {"path": str(p)})["key"], p
+
+    def test_standard_shrinks_and_keeps_original(self):
+        k, p = self._make("scan.pdf")
+        size = p.stat().st_size
+        r = self.registry.call("pdf", "compress", {"key": k, "level": "standard"})
+        self.assertEqual(r["name"], "scan_圧縮.pdf")
+        self.assertLess(r["after"], r["before"] * 0.5)
+        self.assertEqual(p.stat().st_size, size)                  # 元は変えない
+        r2 = self.registry.call("pdf", "compress", {"key": k, "level": "standard"})
+        self.assertEqual(r2["name"], "scan_圧縮 (2).pdf")         # 上書きしない
+
+    def test_no_gain_leaves_nothing(self):
+        k, p = self._make("text.pdf", with_image=False)
+        r = self.registry.call("pdf", "compress", {"key": k, "level": "light"})
+        if not r["path"]:
+            self.assertEqual(sorted(x.name for x in p.parent.iterdir() if x.name.startswith((".text", "text_"))), [])
+        with self.assertRaises(ModuleError):
+            self.registry.call("pdf", "compress", {"key": k, "level": "huge"})
+
 
 if __name__ == "__main__":
     unittest.main()

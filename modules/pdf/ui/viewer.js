@@ -366,10 +366,27 @@ export async function mount(el, ctx) {
     ctx.contextMenu([
       { label: t("pdf.toText"), icon: icons.text, onClick: toText },
       { label: t("pdf.toImages"), icon: icons.image, onClick: toImages },
+      { label: t("pdf.compress"), icon: icons.layers, onClick: () => setTimeout(() => ctx.contextMenu(
+        ["light", "standard", "strong"].map((lv) => ({ label: t(`pdf.compress.${lv}`), onClick: () => compress(lv) })), r.left, r.bottom + 4)) },
       "-",
       { label: dark ? t("pdf.lightPages") : t("pdf.darkPages"), icon: icons.moon, onClick: () => { dark = !dark; el.querySelector(".pv").classList.toggle("dark", dark); } },
       { label: t("folders.reveal"), icon: icons.reveal, onClick: async () => ctx.host.revealPath(await pdfPath()).catch((er) => ctx.toast(er.message, "error")) },
     ], r.left, r.bottom + 4);
+  }
+
+  // 圧縮する: 隣に「<名前>_圧縮.pdf」を作る（元は変えない）
+  async function compress(level) {
+    ctx.setStatus(t("pdf.compressing"));
+    try {
+      const r = await ctx.call("compress", { key, level });
+      ctx.setStatus(t("pdf.status", { n: N, mb }));
+      const MB = (b) => (b / 1048576).toFixed(b < 10485760 ? 2 : 1);
+      if (!r.path) return ctx.toast(t("pdf.compressNoGain", { before: MB(r.before) }), "info", 7000);
+      let msg = t("pdf.compressDone", { name: r.name, before: MB(r.before), after: MB(r.after), pct: Math.round((1 - r.after / r.before) * 100) });
+      if (r.signed) msg += "\n" + t("pdf.compressSigned");
+      ctx.toast(msg, r.signed ? "error" : "info", 9000);
+      ctx.host.revealPath(r.path).catch(() => {});
+    } catch (e) { ctx.setStatus(""); ctx.toast(e.message, "error", 7000); }
   }
 
   async function toText() {

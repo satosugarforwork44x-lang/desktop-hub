@@ -645,6 +645,55 @@ def extract_text(key: str, pages: str = "all", ocr: str = "auto", lang: str = ""
             "engine": engine, "unreadPages": missing, "chars": len(body)}
 
 
+# ---------- 圧縮する ----------
+# PyMuPDF（AGPL、同梱しない。「テキストにする」と同じ）で、使っていないデータを捨てて詰め直し、必要なら画像を作り直す。
+# 結果は「<名前>_圧縮.pdf」として隣に保存する（元は上書きしない）。小さくならなければ残さない
+COMPRESS_LEVELS = {
+    "light": None,                                                   # 画質は変えない
+    "standard": {"dpi_threshold": 165, "dpi_target": 150, "quality": 80},   # 150dpi を超える画像だけ作り直す
+    "strong": {"dpi_threshold": 110, "dpi_target": 100, "quality": 60},     # 画面で読む用
+}
+
+
+def compress(key: str, level: str = "standard") -> dict:
+    """PDF を小さくして隣に保存する。返り値: before / after（バイト）、path・name（小さくならなければ空）、signed。"""
+    if level not in COMPRESS_LEVELS:
+        raise PdfError(f"圧縮の強さが分からない: {level}")
+    try:
+        import pymupdf
+    except ImportError:
+        raise PdfError(f'圧縮には PyMuPDF が要る: "{sys.executable}" -m pip install --user pymupdf') from None
+    src = _path_of(key)
+    if _kind(src) != "pdf":
+        raise PdfError("PDF ではない")
+    before = src.stat().st_size
+    doc = pymupdf.open(src)
+    try:
+        if doc.needs_pass:
+            raise PdfError("パスワード付きの PDF は圧縮できない")
+        signed = doc.get_sigflags() > 0                # 電子署名は、写しでは無効になる（元は無事）
+        opts = COMPRESS_LEVELS[level]
+        if opts:
+            if not hasattr(doc, "rewrite_images"):
+                raise PdfError(f"画像の作り直しには新しい PyMuPDF が要る（今は {pymupdf.VersionBind}）。「軽く」は使える")
+            doc.rewrite_images(**opts)
+        tmp = src.with_name(f".{src.stem}.hubtmp.pdf")
+        save = dict(garbage=4, deflate=True, deflate_images=True, deflate_fonts=True, clean=True)
+        try:
+            doc.save(tmp, use_objstms=True, **save)
+        except TypeError:                              # 古い版には use_objstms が無い
+            doc.save(tmp, **save)
+    finally:
+        doc.close()
+    after = tmp.stat().st_size
+    if after >= before * 0.97:                          # 3% も減らないなら、作る意味がない
+        tmp.unlink(missing_ok=True)
+        return {"before": before, "after": after, "path": "", "name": "", "signed": signed}
+    target = _free_name(src.with_name(f"{src.stem}_圧縮.pdf"))
+    os.replace(tmp, target)
+    return {"before": before, "after": after, "path": str(target), "name": target.name, "signed": signed}
+
+
 # ---------- 「プログラムから開く」への登録（Windows・HKCU） ----------
 PROGID = "Hub.PDF"          # 名前は前の版のまま（登録済みの環境をそのまま使えるように）。画像もこれで開く
 

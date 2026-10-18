@@ -117,6 +117,10 @@
       "summary": "LibreOffice で PDF にして開く"
     },
     {
+      "fn": "compress",
+      "summary": "PDF を小さくして隣に保存する（軽く / 標準 / 強く）"
+    },
+    {
       "fn": "rtf_edit",
       "summary": "rtf を直す（LibreOffice / Word で開く。無ければ txt の写しを作る）"
     }
