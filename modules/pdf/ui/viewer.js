@@ -366,8 +366,9 @@ export async function mount(el, ctx) {
     ctx.contextMenu([
       { label: t("pdf.toText"), icon: icons.text, onClick: toText },
       { label: t("pdf.toImages"), icon: icons.image, onClick: toImages },
-      { label: t("pdf.compress"), icon: icons.layers, onClick: () => setTimeout(() => ctx.contextMenu(
-        ["light", "standard", "strong"].map((lv) => ({ label: t(`pdf.compress.${lv}`), onClick: () => compress(lv) })), r.left, r.bottom + 4)) },
+      "-",
+      { heading: true, label: t("pdf.compress") },
+      ...["light", "standard", "strong"].map((lv) => ({ label: t(`pdf.compress.${lv}`), icon: icons.layers, onClick: () => compress(lv) })),
       "-",
       { label: dark ? t("pdf.lightPages") : t("pdf.darkPages"), icon: icons.moon, onClick: () => { dark = !dark; el.querySelector(".pv").classList.toggle("dark", dark); } },
       { label: t("folders.reveal"), icon: icons.reveal, onClick: async () => ctx.host.revealPath(await pdfPath()).catch((er) => ctx.toast(er.message, "error")) },

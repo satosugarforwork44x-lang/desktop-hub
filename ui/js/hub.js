@@ -120,7 +120,8 @@ export function contextMenu(items, x, y) {
   menu.style.top = `${Math.max(4, Math.min(y, innerHeight - r.height - 4))}px`;
   menu.querySelector("button")?.focus();
   setTimeout(() => document.addEventListener("pointerdown", outside, { once: true }), 0);
-  function outside(e) { if (!menu.contains(e.target)) closeMenus(); else document.addEventListener("pointerdown", outside, { once: true }); }
+  function outside(e) { if (!menu.isConnected) return;   // 閉じた後のメニューが、次に開いたメニューを閉じないように
+    if (!menu.contains(e.target)) closeMenus(); else document.addEventListener("pointerdown", outside, { once: true }); }
   menu.addEventListener("keydown", (e) => {
     const btns = [...menu.querySelectorAll("button:not(:disabled)")];
     const i = btns.indexOf(document.activeElement);
